@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { servicios } from "../data/servicios";
-import ServicioCard from "../components/ServicioCard";
+import ServicioCard from "../components/ui/ServicioCard";
 
 function ServiciosPage() {
   const [busqueda, setBusqueda] = useState("");

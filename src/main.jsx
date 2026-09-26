@@ -6,6 +6,8 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 // trae el archivo de estilos de bootstrap (CSS)
 import  'bootstrap/dist/css/bootstrap.min.css'
+
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 // trae nuestros estilos
 import './index.css'
 // trae el componente de toda la aplicacion

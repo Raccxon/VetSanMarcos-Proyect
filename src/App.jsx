@@ -1,20 +1,15 @@
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
+import Layout from './components/layout/Layout'
 import ServiciosPage from './pages/ServiciosPage'
 
 function App() {
   return (
-    <div>
-      <nav>
-        <Link to="/">Inicio</Link>
-        {' | '}
-        <Link to="/servicios">Servicios</Link>
-      </nav>
-
-      <Routes>
-        <Route path="/" element={<h1>Veterinaria San Marcos</h1>} />
-        <Route path="/servicios" element={<ServiciosPage />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<h1>Bienvenido a la Veterinaria San Marcos</h1>} />
+        <Route path="servicios" element={<ServiciosPage />} />
+      </Route>
+    </Routes>
   )
 }
 
