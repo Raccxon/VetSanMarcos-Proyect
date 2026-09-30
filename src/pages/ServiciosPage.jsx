@@ -1,18 +1,13 @@
 import { useState } from "react";
 import { servicios } from "../data/servicios";
 import ServicioCard from "../components/ui/ServicioCard";
+import { filtrarServicios } from "../utils/filtrarServicios";
 
 function ServiciosPage() {
   const [busqueda, setBusqueda] = useState("");
   const [categoria, setCategoria] = useState("Todas");
 
-  const serviciosFiltrados = servicios.filter((item) => {
-    const coincideTexto =
-      item.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.especie.toLowerCase().includes(busqueda.toLowerCase());
-    const coincideCat = categoria === "Todas" || item.categoria === categoria;
-    return coincideTexto && coincideCat;
-  });
+  const serviciosFiltrados = filtrarServicios(servicios, busqueda, categoria);
 
   return (
     <div className="servicios-page">
