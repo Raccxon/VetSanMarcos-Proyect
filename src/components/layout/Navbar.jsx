@@ -4,7 +4,7 @@ function Navbar() {
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
             <div className="container">
-                <NavLink className="navbar-brand" to="/">
+                <NavLink className="navbar-brand fw-bold" to="/">
                     Veterinaria San Marcos
                 </NavLink>
 
@@ -24,6 +24,20 @@ function Navbar() {
                         </li>
                         <li className="nav-item">
                             <NavLink className="nav-link" to="/servicios">Servicios</NavLink>
+                        </li>
+                        <li className="nav-item">
+                            <NavLink className="nav-link" to="/agendar">Agendar Cita</NavLink>
+                        </li>
+                        <li className="nav-item">
+                            <NavLink className="nav-link" to="/historial">Ficha y Vacunas</NavLink>
+                        </li>
+                        <li className="nav-item">
+                            <NavLink className="nav-link" to="/admin">Administración</NavLink>
+                        </li>
+                        <li className="nav-item ms-lg-2">
+                            <NavLink className="btn btn-outline-light nav-link px-3 text-white" to="/login">
+                                Iniciar Sesión
+                            </NavLink>
                         </li>
                     </ul>
                 </div>

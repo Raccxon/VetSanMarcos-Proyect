@@ -1,59 +1,70 @@
-import { useState } from "react";
-import { servicios } from "../data/servicios";
-import ServicioCard from "../components/ui/ServicioCard";
+import { useState, useEffect } from 'react'
+import { getServicios } from '../services/apiServices'
 
-function ServiciosPage() {
-  const [busqueda, setBusqueda] = useState("");
-  const [categoria, setCategoria] = useState("Todas");
+export default function ServiciosPage() {
+  const [lista, setLista] = useState([])
+  const [filtro, setFiltro] = useState('')
+  const [categoria, setCategoria] = useState('Todas')
 
-  const serviciosFiltrados = servicios.filter((item) => {
-    const coincideTexto =
-      item.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.especie.toLowerCase().includes(busqueda.toLowerCase());
-    const coincideCat = categoria === "Todas" || item.categoria === categoria;
-    return coincideTexto && coincideCat;
-  });
+  useEffect(() => {
+    getServicios().then(data => setLista(data))
+  }, [])
+
+  const filtrados = lista.filter(s => {
+    const coincideNombre = s.nombre.toLowerCase().includes(filtro.toLowerCase())
+    const coincideCat = categoria === 'Todas' || s.categoria === categoria
+    return coincideNombre && coincideCat
+  })
 
   return (
-    <div className="servicios-page">
-      <h1>Catálogo de Servicios Médicos</h1>
-
-      {/* Filtros de búsqueda */}
-      <div className="filtros">
-        <input
-          type="text"
-          placeholder="Buscar..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="input-busqueda"
-        />
-        <select
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
-          className="select-categoria"
-        >
-          <option value="Todas">Todas las categorías</option>
-          <option value="Consultas">Consultas</option>
-          <option value="Vacunación">Vacunación</option>
-          <option value="Cirugía">Cirugía</option>
-          <option value="Desparasitación">Desparasitación</option>
-          <option value="Exámenes">Exámenes</option>
-          <option value="Otros">Otros</option>
-        </select>
+    <div className="container py-4">
+      <div className="text-center mb-4">
+        <h1 className="fw-bold text-success">Catálogo de Servicios Médicos</h1>
+        <p className="text-muted">Conoce nuestras atenciones veterinarias disponibles y sus tarifas.</p>
       </div>
 
-      {/* Grilla de servicios */}
-      <div className="servicios-grid">
-        {serviciosFiltrados.length > 0 ? (
-          serviciosFiltrados.map((servicio) => (
-            <ServicioCard key={servicio.id || servicio.nombre} servicio={servicio} />
-          ))
-        ) : (
-          <p>No se encontraron servicios.</p>
-        )}
+      {/* Barra de Búsqueda y Filtros */}
+      <div className="custom-card p-3 mb-4">
+        <div className="row g-3">
+          <div className="col-md-8">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar servicio por nombre..."
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <select className="form-select" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+              <option value="Todas">Todas las categorías</option>
+              <option value="Consultas">Consultas</option>
+              <option value="Vacunación">Vacunación</option>
+              <option value="Cirugías">Cirugías</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid de Servicios */}
+      <div className="row g-4">
+        {filtrados.map((s) => (
+          <div key={s.id} className="col-md-6 col-lg-4">
+            <div className="custom-card p-4 h-100 d-flex flex-column justify-content-between">
+              <div>
+                <span className="badge bg-success-subtle text-success border border-success mb-2">{s.categoria}</span>
+                <h4 className="fw-bold text-dark">{s.nombre}</h4>
+                <p className="text-muted small mb-2">Especie: {s.especie} | Duración: {s.duracion}</p>
+                <p className="text-secondary">{s.descripcion}</p>
+              </div>
+              <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <span className="card-service-price">${s.precio.toLocaleString()}</span>
+                <a href="/agendar" className="btn btn-outline-success btn-sm fw-bold">Agendar</a>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
-  );
+  )
 }
-
-export default ServiciosPage;

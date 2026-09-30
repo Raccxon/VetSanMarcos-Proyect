@@ -2,6 +2,10 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import HomePage from './pages/HomePage'
 import ServiciosPage from './pages/ServiciosPage'
+import AgendarPage from './pages/AgendarPage'
+import HistorialPage from './pages/HistorialPage'
+import LoginPage from './pages/LoginPage'
+import AdminPage from './pages/AdminPage'
 
 function App() {
   return (
@@ -9,6 +13,10 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="servicios" element={<ServiciosPage />} />
+        <Route path="agendar" element={<AgendarPage />} />
+        <Route path="historial" element={<HistorialPage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="admin" element={<AdminPage />} />
       </Route>
     </Routes>
   )

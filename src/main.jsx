@@ -1,4 +1,4 @@
-// corrector ortografico
+// Importar las librerias necesarias para la aplicacion
 import { StrictMode } from 'react'
 // trae funcion que conecta react con el HTML
 import { createRoot } from 'react-dom/client'
@@ -10,6 +10,8 @@ import  'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 // trae nuestros estilos
 import './index.css'
+// Trae nuestros estilos personalizados de marca
+import './style.css'
 // trae el componente de toda la aplicacion
 import App from './App.jsx'
 
