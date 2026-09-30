@@ -1,11 +1,19 @@
+<<<<<<< HEAD
 import { useState, useEffect } from 'react'
 import { getServicios } from '../services/apiServices'
+=======
+import { useState } from "react";
+import { servicios } from "../data/servicios";
+import ServicioCard from "../components/ui/ServicioCard";
+import { filtrarServicios } from "../utils/filtrarServicios";
+>>>>>>> b808c89eddabbc0276af50ed794f58403509dd6f
 
 export default function ServiciosPage() {
   const [lista, setLista] = useState([])
   const [filtro, setFiltro] = useState('')
   const [categoria, setCategoria] = useState('Todas')
 
+<<<<<<< HEAD
   useEffect(() => {
     getServicios().then(data => setLista(data))
   }, [])
@@ -15,6 +23,9 @@ export default function ServiciosPage() {
     const coincideCat = categoria === 'Todas' || s.categoria === categoria
     return coincideNombre && coincideCat
   })
+=======
+  const serviciosFiltrados = filtrarServicios(servicios, busqueda, categoria);
+>>>>>>> b808c89eddabbc0276af50ed794f58403509dd6f
 
   return (
     <div className="container py-4">
