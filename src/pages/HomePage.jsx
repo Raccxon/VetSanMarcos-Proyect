@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import MapaClinica from '../components/ui/MapaClinica'
 
 export default function HomePage() {
@@ -8,12 +9,18 @@ export default function HomePage() {
                 <h1>Bienvenido a Veterinaria San Marcos</h1>
                 <p className="mt-2">Cuidado profesional, compasivo y especializado para la salud de tus mascotas en Rancagua.</p>
                 <div className="mt-4">
-                    <a href="/agendar" className="btn btn-light btn-lg fw-bold text-success me-2 px-4">
+                    <Link
+                        to="/agendar"
+                        className="btn btn-light btn-lg fw-bold text-success me-2 px-4"
+                    >
                         Agendar Cita
-                    </a>
-                    <a href="/servicios" className="btn btn-outline-light btn-lg px-4">
+                    </Link>
+                    <Link
+                        to="/servicios"
+                        className="btn btn-outline-light btn-lg px-4"
+                    >
                         Ver Servicios
-                    </a>
+                    </Link>
                 </div>
             </div>
 

@@ -27,8 +27,8 @@ export default function LoginPage() {
     const mockUser = {
       email: credentials.email,
       rol: credentials.rol,
-      nombre: credentials.rol === 'admin' ? 'Administrador Sistema' : 
-              credentials.rol === 'recepcion' ? 'Recepcionista San Marcos' : 'Dueño de Mascota'
+      nombre: credentials.rol === 'admin' ? 'Administrador Sistema' :
+        credentials.rol === 'recepcion' ? 'Recepcionista San Marcos' : 'Dueño de Mascota'
     }
 
     setUsuarioLogueado(mockUser)
@@ -68,9 +68,15 @@ export default function LoginPage() {
           {error && <div style={{ backgroundColor: '#ffebee', color: 'red', padding: '8px', borderRadius: '4px', marginBottom: '15px', textAlign: 'center', fontSize: '14px' }}>{error}</div>}
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Correo Electrónico</label>
+            <label
+              htmlFor="login-email"
+              style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}
+            >
+              Correo Electrónico
+            </label>
             <input
               type="email"
+              id="login-email"
               name="email"
               value={credentials.email}
               onChange={handleChange}
@@ -80,9 +86,15 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Contraseña</label>
+            <label
+              htmlFor="login-password"
+              style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}
+            >
+              Contraseña
+            </label>
             <input
               type="password"
+              id="password"
               name="password"
               value={credentials.password}
               onChange={handleChange}
@@ -92,8 +104,14 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Seleccionar Rol (Simulación P2)</label>
+            <label
+              htmlFor="login-rol"
+              style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}
+            >
+              Seleccionar Rol (Simulación P2)
+            </label>
             <select
+              id="login-rol"
               name="rol"
               value={credentials.rol}
               onChange={handleChange}

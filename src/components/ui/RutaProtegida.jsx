@@ -1,20 +1,42 @@
 import { Navigate } from 'react-router-dom'
 
 export default function RutaProtegida({ children, rolRequerido }) {
-    const session = JSON.parse(localStorage.getItem('userSession'))
+  let session = null
 
-    if (!session) {
-        return <Navigate to="/login" replace />
-    }
+  try {
+    session = JSON.parse(
+      localStorage.getItem('userSession')
+    )
+  } catch {
+    localStorage.removeItem('userSession')
+  }
 
-    if (rolRequerido && session.rol !== rolRequerido) {
-        return (
-            <div className="container py-5 text-center">
-                <h2 className="text-danger">Acceso Restringido</h2>
-                <p>No tienes los permisos necesarios para ver esta página.</p>
-            </div>
-        )
-    }
+  if (!session) {
+    return <Navigate to="/login" replace />
+  }
 
-    return children
+  if (
+    rolRequerido &&
+    session.rol !== rolRequerido
+  ) {
+    return (
+      <div className="container py-5 text-center">
+
+        <div className="alert alert-danger" role="alert">
+
+          <h2 className="h4">
+            Acceso restringido
+          </h2>
+
+          <p className="mb-0">
+            No tienes los permisos necesarios para ver esta página.
+          </p>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  return children
 }

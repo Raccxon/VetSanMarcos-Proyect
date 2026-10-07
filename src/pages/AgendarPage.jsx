@@ -147,15 +147,24 @@ export default function AgendarPage() {
                 </div>
             ) : (
                 /* FORMULARIO CONTROLADO */
-                <form onSubmit={handleSubmit} style={{ backgroundColor: '#f9f9f9', padding: '24px', borderRadius: '8px' }}>
+                <form
+                    onSubmit={handleSubmit}
+                    className="custom-card p-3 p-md-4"
+                >
 
                     {/* SECCIÓN DUEÑO */}
                     <h3 style={{ borderBottom: '2px solid #ddd', paddingBottom: '8px' }}>1. Datos del Dueño</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Nombre Completo *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="nombreDuenio"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Nombre Completo *
+                            </label>
                             <input
                                 type="text"
+                                id="nombreDuenio"
                                 name="nombreDuenio"
                                 value={formData.nombreDuenio}
                                 onChange={handleChange}
@@ -165,10 +174,16 @@ export default function AgendarPage() {
                             {errores.nombreDuenio && <span style={{ color: 'red', fontSize: '12px' }}>{errores.nombreDuenio}</span>}
                         </div>
 
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>RUT *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="rutDuenio"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                RUT *
+                            </label>
                             <input
                                 type="text"
+                                id="rutDuenio"
                                 name="rutDuenio"
                                 value={formData.rutDuenio}
                                 onChange={handleChange}
@@ -178,10 +193,16 @@ export default function AgendarPage() {
                             {errores.rutDuenio && <span style={{ color: 'red', fontSize: '12px' }}>{errores.rutDuenio}</span>}
                         </div>
 
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Teléfono *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="telefono"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Teléfono *
+                            </label>
                             <input
                                 type="tel"
+                                id="telefono"
                                 name="telefono"
                                 value={formData.telefono}
                                 onChange={handleChange}
@@ -191,10 +212,16 @@ export default function AgendarPage() {
                             {errores.telefono && <span style={{ color: 'red', fontSize: '12px' }}>{errores.telefono}</span>}
                         </div>
 
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Correo Electrónico *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="email"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Correo Electrónico *
+                            </label>
                             <input
                                 type="email"
+                                id="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
@@ -208,10 +235,16 @@ export default function AgendarPage() {
                     {/* SECCIÓN MASCOTA */}
                     <h3 style={{ borderBottom: '2px solid #ddd', paddingBottom: '8px' }}>2. Datos de la Mascota</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Nombre Mascota *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="nombreMascota"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Nombre Mascota *
+                            </label>
                             <input
                                 type="text"
+                                id="nombreMascota"
                                 name="nombreMascota"
                                 value={formData.nombreMascota}
                                 onChange={handleChange}
@@ -221,10 +254,16 @@ export default function AgendarPage() {
                             {errores.nombreMascota && <span style={{ color: 'red', fontSize: '12px' }}>{errores.nombreMascota}</span>}
                         </div>
 
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Especie *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="especie"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Especie *
+                            </label>
                             <select
                                 name="especie"
+                                id="especie"
                                 value={formData.especie}
                                 onChange={handleChange}
                                 style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
@@ -239,11 +278,17 @@ export default function AgendarPage() {
 
                     {/* SECCIÓN SERVICIO Y FECHA */}
                     <h3 style={{ borderBottom: '2px solid #ddd', paddingBottom: '8px' }}>3. Selección de Hora</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Servicio Requerido *</label>
+                    <div className="row g-3 mb-4">
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="servicioId"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Servicio Requerido *
+                            </label>
                             <select
                                 name="servicioId"
+                                id="servicioId"
                                 value={formData.servicioId}
                                 onChange={handleChange}
                                 style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
@@ -258,10 +303,16 @@ export default function AgendarPage() {
                             {errores.servicioId && <span style={{ color: 'red', fontSize: '12px' }}>{errores.servicioId}</span>}
                         </div>
 
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Fecha *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="fecha"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Fecha *
+                            </label>
                             <input
                                 type="date"
+                                id="fecha"
                                 name="fecha"
                                 value={formData.fecha}
                                 onChange={handleChange}
@@ -270,10 +321,16 @@ export default function AgendarPage() {
                             {errores.fecha && <span style={{ color: 'red', fontSize: '12px' }}>{errores.fecha}</span>}
                         </div>
 
-                        <div>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Horario Disponibles *</label>
+                        <div className="col-12 col-md-6">
+                            <label
+                                htmlFor="hora"
+                                style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                            >
+                                Horario Disponibles *
+                            </label>
                             <select
                                 name="hora"
+                                id="hora"
                                 value={formData.hora}
                                 onChange={handleChange}
                                 style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
@@ -291,9 +348,15 @@ export default function AgendarPage() {
                         </div>
                     </div>
 
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Motivo de la consulta / Observaciones</label>
+                    <div className="col-12 col-md-6" style={{ marginBottom: '20px' }}>
+                        <label
+                            htmlFor="motivo"
+                            style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}
+                        >
+                            Motivo de la consulta / Observaciones
+                        </label>
                         <textarea
+                            id="motivo"
                             name="motivo"
                             rows="3"
                             value={formData.motivo}

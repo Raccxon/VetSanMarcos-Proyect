@@ -30,7 +30,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
+        <div className="container py-4">
             <h1>Panel de Administración de Usuarios</h1>
             <p style={{ color: '#666', marginBottom: '25px' }}>
                 Módulo exclusivo para Administradores: gestión de cuentas y roles de acceso.
@@ -39,7 +39,8 @@ export default function AdminPage() {
             {/* Formulario Crear Usuario */}
             <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
                 <h3>Registrar Nuevo Usuario</h3>
-                <form onSubmit={handleAgregar} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                <form onSubmit={handleAgregar}>
+                    <div className="row g-3"></div>
                     <input
                         type="text"
                         placeholder="Nombre Completo"
