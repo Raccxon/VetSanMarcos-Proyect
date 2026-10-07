@@ -18,9 +18,7 @@ beforeEach(() => {
 })
 
 describe('LoginPage', () => {
-
   it('muestra error cuando faltan credenciales', () => {
-
     render(<LoginPage />)
 
     fireEvent.click(
@@ -37,13 +35,10 @@ describe('LoginPage', () => {
   })
 
   it('guarda la sesión al iniciar correctamente', () => {
-
     render(<LoginPage />)
 
     fireEvent.change(
-      screen.getByLabelText(
-        'Correo Electrónico'
-      ),
+      screen.getByLabelText('Correo Electrónico'),
       {
         target: {
           value: 'admin@sanmarcos.cl'
@@ -52,9 +47,7 @@ describe('LoginPage', () => {
     )
 
     fireEvent.change(
-      screen.getByLabelText(
-        'Contraseña'
-      ),
+      screen.getByLabelText('Contraseña'),
       {
         target: {
           value: '123456'
@@ -63,9 +56,7 @@ describe('LoginPage', () => {
     )
 
     fireEvent.change(
-      screen.getByLabelText(
-        /Seleccionar Rol/
-      ),
+      screen.getByLabelText(/Seleccionar Rol/),
       {
         target: {
           value: 'admin'
@@ -80,22 +71,16 @@ describe('LoginPage', () => {
     )
 
     expect(
-      screen.getByText(
-        '¡Sesión Iniciada!'
-      )
+      screen.getByText('¡Sesión Iniciada!')
     ).toBeInTheDocument()
 
     expect(
-      screen.getByText(
-        'Administrador Sistema'
-      )
+      screen.getByText('Administrador Sistema')
     ).toBeInTheDocument()
 
     expect(
       JSON.parse(
-        localStorage.getItem(
-          'userSession'
-        )
+        localStorage.getItem('userSession')
       )
     ).toEqual({
       email: 'admin@sanmarcos.cl',
@@ -103,5 +88,4 @@ describe('LoginPage', () => {
       nombre: 'Administrador Sistema'
     })
   })
-
 })

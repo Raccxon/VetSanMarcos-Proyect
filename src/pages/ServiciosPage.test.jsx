@@ -1,16 +1,16 @@
 import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi
 } from 'vitest'
 
 import {
-    render,
-    screen,
-    waitFor,
-    fireEvent
+  fireEvent,
+  render,
+  screen,
+  waitFor
 } from '@testing-library/react'
 
 import { MemoryRouter } from 'react-router-dom'
@@ -18,110 +18,102 @@ import { MemoryRouter } from 'react-router-dom'
 import ServiciosPage from './ServiciosPage'
 
 vi.mock('../services/apiServices', () => ({
-    getServicios: vi.fn(),
+  getServicios: vi.fn()
 }))
 
 import { getServicios } from '../services/apiServices'
 
 const serviciosMock = [
-    {
-        id: 'SV001',
-        categoria: 'Consultas',
-        nombre: 'Consulta general',
-        especie: 'Perro / Gato',
-        duracion: '30 min',
-        precio: 15000,
-        observaciones: 'Atención preventiva básica',
-    },
-    {
-        id: 'VA001',
-        categoria: 'Vacunación',
-        nombre: 'Vacuna antirrábica canina',
-        especie: 'Perro',
-        duracion: '10 min',
-        precio: 12000,
-        observaciones: 'Obligatoria por ley',
-    },
+  {
+    id: 'SV001',
+    categoria: 'Consultas',
+    nombre: 'Consulta general',
+    especie: 'Perro / Gato',
+    duracion: '30 min',
+    precio: 15000,
+    observaciones: 'Atención preventiva básica'
+  },
+  {
+    id: 'VA001',
+    categoria: 'Vacunación',
+    nombre: 'Vacuna antirrábica canina',
+    especie: 'Perro',
+    duracion: '10 min',
+    precio: 12000,
+    observaciones: 'Obligatoria por ley'
+  }
 ]
 
 beforeEach(() => {
-    vi.clearAllMocks()
+  vi.clearAllMocks()
 
-    getServicios.mockResolvedValue(
-        serviciosMock
-    )
+  getServicios.mockResolvedValue(serviciosMock)
 })
 
 describe('ServiciosPage', () => {
+  it('carga y muestra los servicios', async () => {
+    render(
+      <MemoryRouter>
+        <ServiciosPage />
+      </MemoryRouter>
+    )
 
-    it('carga y muestra los servicios', async () => {
+    expect(
+      screen.getByRole('status')
+    ).toHaveTextContent(
+      'Cargando servicios...'
+    )
 
-        render(
-            <MemoryRouter>
-                <ServiciosPage />
-            </MemoryRouter>
-        )
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Consulta general'
+      })
+    ).toBeInTheDocument()
 
-        expect(
-            screen.getByRole('status')
-        ).toHaveTextContent(
-            'Cargando servicios...'
-        )
+    expect(
+      getServicios
+    ).toHaveBeenCalledTimes(1)
+  })
 
-        expect(
-            await screen.findByRole('heading', {
-                name: 'Consulta general'
-            })
-        ).toBeInTheDocument()
+  it('filtra los servicios mediante el buscador', async () => {
+    render(
+      <MemoryRouter>
+        <ServiciosPage />
+      </MemoryRouter>
+    )
 
-        expect(
-            getServicios
-        ).toHaveBeenCalledTimes(1)
+    await screen.findByRole('heading', {
+      name: 'Consulta general'
     })
 
-    it('filtra los servicios mediante el buscador', async () => {
+    const buscador = screen.getByRole(
+      'searchbox',
+      {
+        name: /Buscar servicio/i
+      }
+    )
 
-        render(
-            <MemoryRouter>
-                <ServiciosPage />
-            </MemoryRouter>
-        )
+    fireEvent.change(
+      buscador,
+      {
+        target: {
+          value: 'vacuna'
+        }
+      }
+    )
 
-        await screen.findByRole('heading', {
-            name: 'Consulta general'
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', {
+          name: 'Vacuna antirrábica canina'
         })
+      ).toBeInTheDocument()
 
-        const buscador = screen.getByRole(
-            'searchbox',
-            {
-                name: 'Buscar servicio'
-            }
-        )
-
-        fireEvent.change(
-            buscador,
-            {
-                target: {
-                    value: 'vacuna'
-                }
-            }
-        )
-
-        await waitFor(() => {
-
-            expect(
-                screen.getByRole('heading', {
-                    name: 'Vacuna antirrábica canina'
-                })
-            ).toBeInTheDocument()
-
-            expect(
-                screen.queryByRole('heading', {
-                    name: 'Consulta general'
-                })
-            ).not.toBeInTheDocument()
-
+      expect(
+        screen.queryByRole('heading', {
+          name: 'Consulta general'
         })
+      ).not.toBeInTheDocument()
     })
-
+  })
 })

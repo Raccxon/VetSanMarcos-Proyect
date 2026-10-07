@@ -1,108 +1,168 @@
-import { useState } from 'react'
-import { historialMascotas } from '../data/citas'
+import { useState } from "react";
+import { historialMascotas } from "../data/citas";
 
 export default function HistorialPage() {
-    const [rutBusqueda, setRutBusqueda] = useState('')
-    const [mascotaEncontrada, setMascotaEncontrada] = useState(null)
-    const [errorBusqueda, setErrorBusqueda] = useState('')
+  const [rutBusqueda, setRutBusqueda] = useState("");
+  const [mascotaEncontrada, setMascotaEncontrada] = useState(null);
+  const [errorBusqueda, setErrorBusqueda] = useState("");
 
-    const handleBuscar = (e) => {
-        e.preventDefault()
-        setErrorBusqueda('')
+  const handleBuscar = (e) => {
+    e.preventDefault();
+    setErrorBusqueda("");
 
-        const resultado = historialMascotas.find(
-            (item) => item.rutDuenio.toLowerCase().trim() === rutBusqueda.toLowerCase().trim()
-        )
+    const resultado = historialMascotas.find(
+      (item) =>
+        item.rutDuenio.toLowerCase().trim() ===
+        rutBusqueda.toLowerCase().trim()
+    );
 
-        if (resultado) {
-            setMascotaEncontrada(resultado)
-        } else {
-            setMascotaEncontrada(null)
-            setErrorBusqueda('No se encontraron registros asociados al RUT ingresado. Prueba con: 12345678-9')
-        }
+    if (resultado) {
+      setMascotaEncontrada(resultado);
+    } else {
+      setMascotaEncontrada(null);
+      setErrorBusqueda(
+        "No se encontraron registros asociados al RUT ingresado. Prueba con: 12345678-9"
+      );
     }
+  };
 
-    return (
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
-            <h1 style={{ textAlign: 'center', marginBottom: '10px' }}>Historial Médico y Carnet de Vacunas</h1>
-            <p style={{ textAlign: 'center', color: '#666', marginBottom: '30px' }}>
-                Consulta el registro clínico y las fechas de vacunación de tus mascotas.
-            </p>
+  return (
+    <div className="container py-4">
+      <h1 className="text-center mb-2">
+        Historial Médico y Carnet de Vacunas
+      </h1>
 
-            {/* Formulario de búsqueda por RUT */}
-            <form onSubmit={handleBuscar} style={{ display: 'flex', gap: '10px', marginBottom: '30px', justifyContent: 'center' }}>
-                <input
-                    type="text"
-                    placeholder="Ingrese RUT del dueño (ej. 12345678-9)"
-                    value={rutBusqueda}
-                    onChange={(e) => setRutBusqueda(e.target.value)}
-                    style={{ padding: '10px', width: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-                <button
-                    type="submit"
-                    style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                    Buscar Ficha
-                </button>
-            </form>
+      <p className="text-center text-muted mb-4">
+        Consulta el registro clínico y las fechas de vacunación de tus mascotas.
+      </p>
 
-            {errorBusqueda && (
-                <p style={{ color: 'red', textAlign: 'center', backgroundColor: '#ffebee', padding: '10px', borderRadius: '4px' }}>
-                    {errorBusqueda}
-                </p>
-            )}
-
-            {/* Resultados del Historial */}
-            {mascotaEncontrada && (
-                <div>
-                    {/* Ficha Mascota */}
-                    <div style={{ backgroundColor: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
-                        <h2 style={{ marginTop: 0, color: '#333' }}>Ficha del Paciente: {mascotaEncontrada.mascota.nombre}</h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                            <p><strong>Dueño:</strong> {mascotaEncontrada.nombreDuenio}</p>
-                            <p><strong>Especie:</strong> {mascotaEncontrada.mascota.especie}</p>
-                            <p><strong>Raza:</strong> {mascotaEncontrada.mascota.raza}</p>
-                            <p><strong>Edad:</strong> {mascotaEncontrada.mascota.edad}</p>
-                            <p><strong>N° Microchip:</strong> {mascotaEncontrada.mascota.chip}</p>
-                        </div>
-                    </div>
-
-                    {/* Registro de Vacunas */}
-                    <h3 style={{ borderBottom: '2px solid #007bff', paddingBottom: '5px' }}>Carnet de Vacunación</h3>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '30px' }}>
-                        <thead>
-                            <tr style={{ backgroundColor: '#007bff', color: 'white', textAlign: 'left' }}>
-                                <th style={{ padding: '10px' }}>Vacuna</th>
-                                <th style={{ padding: '10px' }}>F. Aplicación</th>
-                                <th style={{ padding: '10px' }}>F. Vencimiento</th>
-                                <th style={{ padding: '10px' }}>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {mascotaEncontrada.vacunas.map((v) => (
-                                <tr key={v.id} style={{ borderBottom: '1px solid #ddd' }}>
-                                    <td style={{ padding: '10px' }}>{v.vacuna}</td>
-                                    <td style={{ padding: '10px' }}>{v.fechaAplicacion}</td>
-                                    <td style={{ padding: '10px' }}>{v.fechaVencimiento}</td>
-                                    <td style={{ padding: '10px', fontWeight: 'bold', color: v.estado === 'Vigente' ? 'green' : 'orange' }}>
-                                        {v.estado}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {/* Historial de Atenciones */}
-                    <h3 style={{ borderBottom: '2px solid #007bff', paddingBottom: '5px' }}>Historial de Consultas Médicas</h3>
-                    {mascotaEncontrada.atenciones.map((at) => (
-                        <div key={at.id} style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '6px', marginBottom: '10px' }}>
-                            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>{at.fecha} - {at.motivo}</p>
-                            <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: '#555' }}><strong>Atendido por:</strong> {at.veterinario}</p>
-                            <p style={{ margin: 0, fontSize: '14px' }}><strong>Diagnóstico/Observaciones:</strong> {at.diagnostico}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
+      <form
+        onSubmit={handleBuscar}
+        className="row g-2 justify-content-center mb-4"
+      >
+        <div className="col-12 col-md-6">
+          <input
+            type="text"
+            id="rut-busqueda"
+            className="form-control"
+            placeholder="Ingrese RUT del dueño (ej. 12345678-9)"
+            value={rutBusqueda}
+            onChange={(e) => setRutBusqueda(e.target.value)}
+          />
         </div>
-    )
+
+        <div className="col-12 col-md-2">
+          <button type="submit" className="btn btn-primary w-100">
+            Buscar Ficha
+          </button>
+        </div>
+      </form>
+
+      {errorBusqueda && (
+        <div className="alert alert-danger text-center" role="alert">
+          {errorBusqueda}
+        </div>
+      )}
+
+      {mascotaEncontrada && (
+        <div>
+          <div className="card shadow-sm mb-4">
+            <div className="card-body">
+              <h2 className="h4 mb-4">
+                Ficha del Paciente: {mascotaEncontrada.mascota.nombre}
+              </h2>
+
+              <div className="row g-3">
+                <div className="col-12 col-md-6">
+                  <strong>Dueño:</strong>{" "}
+                  {mascotaEncontrada.nombreDuenio}
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <strong>Especie:</strong>{" "}
+                  {mascotaEncontrada.mascota.especie}
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <strong>Raza:</strong>{" "}
+                  {mascotaEncontrada.mascota.raza}
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <strong>Edad:</strong>{" "}
+                  {mascotaEncontrada.mascota.edad}
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <strong>N° Microchip:</strong>{" "}
+                  {mascotaEncontrada.mascota.chip}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="h5 border-bottom border-primary border-2 pb-2 mb-3">
+            Carnet de Vacunación
+          </h3>
+
+          <div className="table-responsive mb-4">
+            <table className="table table-hover align-middle">
+              <thead className="table-primary">
+                <tr>
+                  <th>Vacuna</th>
+                  <th>F. Aplicación</th>
+                  <th>F. Vencimiento</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {mascotaEncontrada.vacunas.map((v) => (
+                  <tr key={v.id}>
+                    <td>{v.vacuna}</td>
+                    <td>{v.fechaAplicacion}</td>
+                    <td>{v.fechaVencimiento}</td>
+                    <td>
+                      <span
+                        className={
+                          v.estado === "Vigente"
+                            ? "fw-bold text-success"
+                            : "fw-bold text-warning"
+                        }
+                      >
+                        {v.estado}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h3 className="h5 border-bottom border-primary border-2 pb-2 mb-3">
+            Historial de Consultas Médicas
+          </h3>
+
+          {mascotaEncontrada.atenciones.map((at) => (
+            <div key={at.id} className="card shadow-sm mb-3">
+              <div className="card-body">
+                <p className="fw-bold mb-2">
+                  {at.fecha} - {at.motivo}
+                </p>
+
+                <p className="text-muted mb-2">
+                  <strong>Atendido por:</strong> {at.veterinario}
+                </p>
+
+                <p className="mb-0">
+                  <strong>Diagnóstico/Observaciones:</strong>{" "}
+                  {at.diagnostico}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
