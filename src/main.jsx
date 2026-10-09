@@ -15,11 +15,15 @@ import './style.css'
 // trae el componente de toda la aplicacion
 import App from './App.jsx'
 
+import { CitasProvider } from './context/CitasContext.jsx'
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <CitasProvider>
+        <App />
+      </CitasProvider>
     </BrowserRouter>
   </StrictMode>
 )

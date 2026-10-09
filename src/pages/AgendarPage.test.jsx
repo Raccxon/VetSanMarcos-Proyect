@@ -4,9 +4,15 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import AgendarPage from "./AgendarPage";
 
+import { CitasProvider } from "../context/CitasContext.jsx";
+
 describe("AgendarPage", () => {
   it("muestra errores al enviar el formulario vacío", () => {
-    render(<AgendarPage />);
+    render(
+      <CitasProvider>
+        <AgendarPage />
+      </CitasProvider>
+    );
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -30,7 +36,11 @@ describe("AgendarPage", () => {
   });
 
   it("muestra la confirmación con un formulario válido", () => {
-    render(<AgendarPage />);
+    render(
+      <CitasProvider>
+        <AgendarPage />
+      </CitasProvider>
+    );
 
     fireEvent.change(screen.getByLabelText("Nombre Completo *"), {
       target: {

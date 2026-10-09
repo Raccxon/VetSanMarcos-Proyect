@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { servicios } from '../data/servicios'
+import { useCitas } from '../context/CitasContext.jsx'
 
 export default function AgendarPage() {
+    const { agregarCita } = useCitas()
     // Estado para el formulario controlado
     const [formData, setFormData] = useState({
         nombreDuenio: '',
@@ -73,6 +75,7 @@ export default function AgendarPage() {
         }
 
         // Mostrar modal / tarjeta de confirmación
+        agregarCita(nuevaCita)
         setCitaConfirmada(nuevaCita)
     }
 
