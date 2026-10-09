@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import AdminPage from './pages/AdminPage'
 import MisCitasPage from './pages/MisCitasPage'
 import { ROLES } from './constants/roles'
+import GestionCitasPage from './pages/GestionCitasPage'
 
 function App() {
   return (
@@ -49,6 +50,15 @@ function App() {
         />
 
         <Route
+          path="gestion-citas"
+          element={
+            <RutaProtegida rolRequerido={ROLES.RECEPCION}>
+              <GestionCitasPage/>
+            </RutaProtegida>
+          }
+        />
+
+        <Route
           path="mis-citas"
           element={
             <RutaProtegida rolRequerido={ROLES.CLIENTE}>
@@ -56,6 +66,7 @@ function App() {
             </RutaProtegida>
           }
         />
+
 
       </Route>
 

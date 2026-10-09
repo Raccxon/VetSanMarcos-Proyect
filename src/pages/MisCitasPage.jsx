@@ -2,13 +2,7 @@ import { Link } from "react-router-dom"
 import { useCitas } from "../context/CitasContext"
 import { obtenerSesion } from "../utils/sesion"
 import { filtrarCitasPorEmail } from "../utils/citas"
-
-const BADGE_POR_ESTADO = {
-    Pendiente: 'bg-warning text-dark',
-    Confirmada: 'bg-success',
-    Reagendada: 'bg-info text-dark',
-    Cancelada: 'bg-secondary'
-}
+import { CLASE_BADGE_ESTADO} from "../constants/estadosCitas"
 
 export default function MisCitasPage() {
     const { citas } = useCitas()
@@ -37,7 +31,7 @@ export default function MisCitasPage() {
                                     <div className="d-flex justify-content-between align-items-start mb-2">
                                         <h2 className="h5 mb-0">{cita.nombreMascota} </h2>
                                         <span
-                                            className={`badge ${BADGE_POR_ESTADO[cita.estado]} ?? 'bg-secondary'}`}
+                                            className={`badge ${CLASE_BADGE_ESTADO[cita.estado] ?? 'bg-secondary'}`}
                                         >
                                             {cita.estado}
                                         </span>

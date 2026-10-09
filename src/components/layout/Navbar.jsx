@@ -32,6 +32,9 @@ function Navbar() {
                             <NavLink className="nav-link" to="/mis-citas">Mis Citas</NavLink>
                         </li>
                         <li className="nav-item">
+                            <NavLink className="nav-link" to="/gestion-citas">Gestión de Citas</NavLink>
+                        </li>
+                        <li className="nav-item">
                             <NavLink className="nav-link" to="/historial">Ficha y Vacunas</NavLink>
                         </li>
                         <li className="nav-item">
