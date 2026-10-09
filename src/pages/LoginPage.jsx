@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { ROLES } from '../constants/roles'
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({
     email: '',
     password: '',
-    rol: 'cliente'
+    rol: '{ROLES.CLIENTE}'
   })
 
   const [error, setError] = useState('')
@@ -33,9 +34,9 @@ export default function LoginPage() {
       email: credentials.email,
       rol: credentials.rol,
       nombre:
-        credentials.rol === 'admin'
+        credentials.rol === '{ROLES.ADMIN}'
           ? 'Administrador Sistema'
-          : credentials.rol === 'recepcion'
+          : credentials.rol === '{ROLES.RECEPCION}'
             ? 'Recepcionista San Marcos'
             : 'Dueño de Mascota'
     }
@@ -55,7 +56,7 @@ export default function LoginPage() {
     setCredentials({
       email: '',
       password: '',
-      rol: 'cliente'
+      rol: '{ROLES.CLIENTE}'
     })
   }
 
@@ -166,15 +167,15 @@ export default function LoginPage() {
                   value={credentials.rol}
                   onChange={handleChange}
                 >
-                  <option value="cliente">
+                  <option value="{ROLES.CLIENTE}">
                     Dueño de Mascota (Cliente)
                   </option>
 
-                  <option value="recepcion">
+                  <option value="{ROLES.RECEPCION}">
                     Recepcionista / Operador
                   </option>
 
-                  <option value="admin">
+                  <option value="{ROLES.ADMIN}">
                     Administrador
                   </option>
                 </select>
