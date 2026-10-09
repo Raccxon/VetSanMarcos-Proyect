@@ -1,7 +1,7 @@
 # Veterinaria San Marcos - Frontend (EP2)
 
 Aplicación web para la gestión de servicios, citas e historial de la Veterinaria San Marcos (Rancagua).
-DSY1104 Desarrollo Full Stack II · Sección <XXX> · Grupo <GXX>
+DSY1104 Desarrollo Full Stack II
 
 **Integrantes:** Alan Ojeda, Nayeli Leiva
 
