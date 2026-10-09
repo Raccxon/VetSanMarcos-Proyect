@@ -3,7 +3,7 @@
 Aplicación web para la gestión de servicios, citas e historial de la Veterinaria San Marcos (Rancagua).
 DSY1104 Desarrollo Full Stack II · Sección <XXX> · Grupo <GXX>
 
-**Integrantes:** <Alan Ojeda>, <Nayeli Leiva>
+**Integrantes:** Alan Ojeda, Nayeli Leiva
 
 ## Tecnologías
 React 19, Vite, React Router, Bootstrap 5, React Leaflet, Vitest + React Testing Library.
