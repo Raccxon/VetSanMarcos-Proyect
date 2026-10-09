@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ROLES } from '../constants/roles'
+import { obtenerSesion } from '../utils/sesion'
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -9,7 +10,7 @@ export default function LoginPage() {
   })
 
   const [error, setError] = useState('')
-  const [usuarioLogueado, setUsuarioLogueado] = useState(null)
+  const [usuarioLogueado, setUsuarioLogueado] = useState(obtenerSesion)
 
   const handleChange = (e) => {
     const { name, value } = e.target
