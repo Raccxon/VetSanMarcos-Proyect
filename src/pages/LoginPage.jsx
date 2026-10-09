@@ -5,7 +5,7 @@ export default function LoginPage() {
   const [credentials, setCredentials] = useState({
     email: '',
     password: '',
-    rol: '{ROLES.CLIENTE}'
+    rol: {ROLES.CLIENTE}
   })
 
   const [error, setError] = useState('')
@@ -56,7 +56,7 @@ export default function LoginPage() {
     setCredentials({
       email: '',
       password: '',
-      rol: '{ROLES.CLIENTE}'
+      rol: ROLES.CLIENTE
     })
   }
 
