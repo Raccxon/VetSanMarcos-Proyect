@@ -50,7 +50,7 @@ function App() {
         <Route
           path="mis-citas"
           element={
-            <RutaProtegida rolRequerido="usuario">
+            <RutaProtegida rolRequerido="cliente">
               <MisCitasPage />
             </RutaProtegida>
           }
