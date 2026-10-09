@@ -5,8 +5,8 @@ import { createContext, useState, useContext } from "react";
 const CitasContext = createContext(null);
 
 // Provider guarda estado y se lo ofrece a sus hijos
-export function CitasProvider({ children }) {
-    const [citas, setCitas] = useState([]);
+export function CitasProvider({ children, citasIniciales = [] }) {
+    const [citas, setCitas] = useState(citasIniciales);
 
     const agregarCita = (nuevaCita) => {
         setCitas((prev) => [...prev, nuevaCita]);

@@ -34,7 +34,7 @@ export default function MisCitasPage() {
                         <div className="col-12 col-md-6 col-xl-4" key={cita.id}>
                             <div className="card h-100 shadow-sm">
                                 <div className="card-body"> 
-                                    <div classhName="d-flex justify-content-between align-items-start mb-2">
+                                    <div className="d-flex justify-content-between align-items-start mb-2">
                                         <h2 className="h5 mb-0">{cita.nombreMascota} </h2>
                                         <span
                                             className={`badge ${BADGE_POR_ESTADO[cita.estado]} ?? 'bg-secondary'}`}
