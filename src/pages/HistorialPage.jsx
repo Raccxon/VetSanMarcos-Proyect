@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { historialMascotas } from "../data/citas";
+import { calcularEstadoVacuna } from "../utils/vacunas";
 
 export default function HistorialPage() {
   const [rutBusqueda, setRutBusqueda] = useState("");
@@ -117,24 +118,26 @@ export default function HistorialPage() {
               </thead>
 
               <tbody>
-                {mascotaEncontrada.vacunas.map((v) => (
-                  <tr key={v.id}>
-                    <td>{v.vacuna}</td>
-                    <td>{v.fechaAplicacion}</td>
-                    <td>{v.fechaVencimiento}</td>
-                    <td>
-                      <span
-                        className={
-                          v.estado === "Vigente"
-                            ? "fw-bold text-success"
-                            : "fw-bold text-warning"
-                        }
-                      >
-                        {v.estado}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {mascotaEncontrada.vacunas.map((v) => {
+                  const estado = calcularEstadoVacuna(v.fechaVencimiento);
+                  const clase =
+                    estado === "Vigente"
+                      ? "fw-bold text-success"
+                      : estado === "Vencida"
+                        ? "fw-bold text-danger"
+                        : "fw-bold text-warning";
+
+                  return (
+                    <tr key={v.id}>
+                      <td>{v.vacuna}</td>
+                      <td>{v.fechaAplicacion}</td>
+                      <td>{v.fechaVencimiento}</td>
+                      <td>
+                        <span className={clase}>{estado}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
