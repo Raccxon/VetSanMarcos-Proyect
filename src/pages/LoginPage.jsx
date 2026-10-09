@@ -123,6 +123,7 @@ export default function LoginPage() {
                   type="email"
                   id="login-email"
                   name="email"
+                  autoComplete="email" 
                   className="form-control"
                   value={credentials.email}
                   onChange={handleChange}
@@ -142,6 +143,7 @@ export default function LoginPage() {
                   type="password"
                   id="login-password"
                   name="password"
+                  autoComplete="current-password"
                   className="form-control"
                   value={credentials.password}
                   onChange={handleChange}
