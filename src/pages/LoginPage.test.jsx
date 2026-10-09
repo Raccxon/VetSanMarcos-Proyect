@@ -59,7 +59,7 @@ describe('LoginPage', () => {
       screen.getByLabelText(/Seleccionar Rol/),
       {
         target: {
-          value: 'admin'
+          value: "admin"
         }
       }
     )
@@ -84,7 +84,7 @@ describe('LoginPage', () => {
       )
     ).toEqual({
       email: 'admin@sanmarcos.cl',
-      rol: 'admin',
+      rol: "admin",
       nombre: 'Administrador Sistema'
     })
   })

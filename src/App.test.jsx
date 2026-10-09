@@ -25,7 +25,7 @@ beforeEach(() => {
 
 describe('Rutas protegidas en App', () => {
     it('un dueño con sesion puede entrar a Mis citas', () => {
-        iniciarSesion('cliente')
+        iniciarSesion("cliente")
         renderEnRuta('/mis-citas')
         expect(screen.getByRole('heading', {name: 'Mis Citas'})).toBeInTheDocument()
     })
@@ -36,7 +36,7 @@ describe('Rutas protegidas en App', () => {
     })
 
     it('un recepcionista no puede entrar a Mis citas', () => {
-        iniciarSesion('recepcionista')
+        iniciarSesion("recepcion")
         renderEnRuta('/mis-citas')
         expect(screen.getByText('Acceso restringido')).toBeInTheDocument()
     })

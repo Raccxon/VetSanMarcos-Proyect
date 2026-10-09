@@ -225,7 +225,6 @@ export default function AgendarPage() {
                             <input
                                 type="email"
                                 id="email"
-                                autoComplete="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
