@@ -5,7 +5,7 @@ export default function LoginPage() {
   const [credentials, setCredentials] = useState({
     email: '',
     password: '',
-    rol: {ROLES.CLIENTE}
+    rol: ROLES.CLIENTE
   })
 
   const [error, setError] = useState('')
@@ -34,9 +34,9 @@ export default function LoginPage() {
       email: credentials.email,
       rol: credentials.rol,
       nombre:
-        credentials.rol === '{ROLES.ADMIN}'
+        credentials.rol === ROLES.ADMIN
           ? 'Administrador Sistema'
-          : credentials.rol === '{ROLES.RECEPCION}'
+          : credentials.rol === ROLES.RECEPCION
             ? 'Recepcionista San Marcos'
             : 'Dueño de Mascota'
     }
@@ -167,15 +167,15 @@ export default function LoginPage() {
                   value={credentials.rol}
                   onChange={handleChange}
                 >
-                  <option value="{ROLES.CLIENTE}">
+                  <option value={ROLES.CLIENTE}>
                     Dueño de Mascota (Cliente)
                   </option>
 
-                  <option value="{ROLES.RECEPCION}">
+                  <option value={ROLES.RECEPCION}>
                     Recepcionista / Operador
                   </option>
 
-                  <option value="{ROLES.ADMIN}">
+                  <option value={ROLES.ADMIN}>
                     Administrador
                   </option>
                 </select>
