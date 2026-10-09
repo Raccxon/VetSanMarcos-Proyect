@@ -8,6 +8,7 @@ import AgendarPage from './pages/AgendarPage'
 import HistorialPage from './pages/HistorialPage'
 import LoginPage from './pages/LoginPage'
 import AdminPage from './pages/AdminPage'
+import MisCitasPage from './pages/MisCitasPage'
 
 function App() {
   return (
@@ -42,6 +43,15 @@ function App() {
           element={
             <RutaProtegida rolRequerido="admin">
               <AdminPage />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="mis-citas"
+          element={
+            <RutaProtegida rolRequerido="usuario">
+              <MisCitasPage />
             </RutaProtegida>
           }
         />

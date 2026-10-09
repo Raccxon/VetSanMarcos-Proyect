@@ -29,6 +29,9 @@ function Navbar() {
                             <NavLink className="nav-link" to="/agendar">Agendar Cita</NavLink>
                         </li>
                         <li className="nav-item">
+                            <NavLink className="nav-link" to="/mis-citas">Mis Citas</NavLink>
+                        </li>
+                        <li className="nav-item">
                             <NavLink className="nav-link" to="/historial">Ficha y Vacunas</NavLink>
                         </li>
                         <li className="nav-item">
