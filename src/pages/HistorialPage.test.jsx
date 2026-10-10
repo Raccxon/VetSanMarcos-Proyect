@@ -9,13 +9,18 @@ const buscar = (rut) => {
     fireEvent.click(screen.getByRole('button', { name: 'Buscar Ficha' }))
 }
 
+const iniciarSesion = (email, rol) =>
+    localStorage.setItem('userSession', JSON.stringify({ email, rol, nombre: 'Prueba'}))
+
 beforeEach(() => {
-    // Fecha fija para que el estado de las vacunas no cambie con el tiempo
+    localStorage.clear()
+    iniciarSesion('recepcion@sanmarcos.cl','recepcion')
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-25T12:00:00'))
 })
 
 afterEach(() => {
+    localStorage.clear()
     vi.useRealTimers()
 })
 
@@ -86,5 +91,31 @@ describe('HistorialPage', () => {
 
         expect(screen.queryByText(/Ficha del Paciente/)).not.toBeInTheDocument()
         expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    it('un dueño ve la ficha de su mascota',() => {
+        iniciarSesion('jperez@gmail.com','cliente')
+        render(<HistorialPage />)
+        buscar('12345678-9')
+
+        expect(screen.getByText('Ficha del Paciente: Firulais')).toBeInTheDocument()
+    })
+
+    it('un dueño no puede ver la ficha de otro dueño', () => {
+        iniciarSesion('otra.persona@gmail.com','cliente')
+        render(<HistorialPage />)
+        
+        buscar('12345678-9')
+        expect(screen.queryByText(/Ficha del Paciente/)).not.toBeInTheDocument()
+        expect(screen.getByRole('alert')).toHaveTextContent(/No se encontraron registros/)
+    })
+
+    it('sin sesión no muestra ninguna ficha', () => {
+        localStorage.clear()
+        render(<HistorialPage />)
+
+        buscar('12345678-9')
+
+        expect(screen.queryByText(/Ficha del paciente/)).not.toBeInTheDocument()
     })
 })

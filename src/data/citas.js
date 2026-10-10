@@ -1,6 +1,7 @@
 export const historialMascotas = [
     {
         rutDuenio: "12345678-9",
+        emailDuenio: "jperez@gmail.com",
         nombreDuenio: "Juan Pérez",
         mascota: {
             nombre: "Firulais",

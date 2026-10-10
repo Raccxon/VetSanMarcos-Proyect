@@ -32,7 +32,11 @@ function App() {
 
         <Route
           path="historial"
-          element={<HistorialPage />}
+          element={
+            <RutaProtegida>
+              <HistorialPage />
+            </RutaProtegida>
+          }
         />
 
         <Route

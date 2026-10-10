@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { historialMascotas } from "../data/citas";
 import { calcularEstadoVacuna } from "../utils/vacunas";
+import { obtenerSesion } from "../utils/sesion";
+import { fichasVisibles } from "../utils/historial";
 
 export default function HistorialPage() {
   const [rutBusqueda, setRutBusqueda] = useState("");
@@ -10,8 +12,9 @@ export default function HistorialPage() {
   const handleBuscar = (e) => {
     e.preventDefault();
     setErrorBusqueda("");
+    const permitidas = fichasVisibles(historialMascotas, obtenerSesion());
 
-    const resultado = historialMascotas.find(
+    const resultado = permitidas.find(
       (item) =>
         item.rutDuenio.toLowerCase().trim() ===
         rutBusqueda.toLowerCase().trim()
@@ -22,7 +25,7 @@ export default function HistorialPage() {
     } else {
       setMascotaEncontrada(null);
       setErrorBusqueda(
-        "No se encontraron registros asociados al RUT ingresado. Prueba con: 12345678-9"
+        "No se encontraron registros asociados al RUT ingresado."
       );
     }
   };
