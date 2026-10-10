@@ -57,4 +57,15 @@ describe("CitasContext", () => {
         const { result } = renderHook(() => useCitas(), { wrapper })
         expect(result.current.citas[0].id).toBe('CIT-9')
     })
+
+    it('reagendarCita cambia fecha, hora y estado solo de la cita indicada', () => {
+        const { result } = renderHook(() => useCitas(), { wrapper })
+        act(() => {
+            result.current.agregarCita({id: 'CIT-1', fecha: '2030-01-10', hora: '09:00', estado: 'Pendiente'})
+            result.current.agregarCita({id: 'CIT-2', fecha: '2030-01-11', hora: '10:00', estado: 'Pendiente'})
+        })
+        act(() => result.current.reagendarCita('CIT-1','2030-02-01','16:00'))
+        expect(result.current.citas[0]).toMatchObject({fecha: '2030-02-01', hora:'16:00', estado: 'Reagendada'})
+        expect(result.current.citas[1]).toMatchObject({fecha: '2030-01-11', hora:'10:00', estado: 'Pendiente'})
+    })
 })

@@ -59,4 +59,34 @@ describe('GestionCitasPage', () => {
         expect(screen.queryByText('Luna')).not.toBeInTheDocument()
         expect(screen.getByText('Rocky')).toBeInTheDocument()
     })
+
+    it('reagenda la cita con nueva fecha y hora', () => {
+        renderPagina(citas)
+        fireEvent.click(screen.getByRole('button', {name: 'Reagendar cita CIT-1'}))
+        fireEvent.change(screen.getByLabelText('Nueva fecha de la cita CIT-1'), { target: {value: '2030-01-15'} })
+        fireEvent.change(screen.getByLabelText('Nuevo horario de la cita CIT-1'), { target: { value: '16:00' } })
+        fireEvent.click(screen.getByRole('button', { name: 'Guardar reagendamiento de la cita CIT-1' }))
+
+        expect(screen.getByText(/2030-01-15/)).toBeInTheDocument()
+        expect(screen.getByLabelText('Cambiar estado de la cita CIT-1').value).toBe('Reagendada')
+    })
+
+    it('no reagenda con una fecha pasada y muestra el error', () => {
+        renderPagina(citas)
+        fireEvent.click(screen.getByRole('button', { name: 'Reagendar cita CIT-1'}))
+        fireEvent.change(screen.getByLabelText('Nueva fecha de la cita CIT-1'),{ target: { value: '2020-01-01' } })
+        fireEvent.click(screen.getByRole('button', { name: 'Guardar reagendamiento de la cita CIT-1'}))
+
+        expect(screen.getByRole('alert')).toHaveTextContent('La fecha no puede ser anterior a hoy')
+        expect(screen.getByLabelText('Cambiar estado de la cita CIT-1').value).toBe('Pendiente')
+    })
+
+    it('cancelar el reagendamiento no cambia la cita', () => {
+        renderPagina(citas)
+        fireEvent.click(screen.getByRole('button', { name: 'Reagendar cita CIT-1'}))
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar'}))
+
+        expect(screen.getByRole('button', { name: 'Reagendar cita CIT-1' })).toBeInTheDocument()
+        expect(screen.getByLabelText('Cambiar estado de la cita CIT-1').value).toBe('Pendiente')
+    })
 })

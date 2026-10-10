@@ -37,12 +37,23 @@ export function CitasProvider({ children, citasIniciales }) {
         )
     }
 
+    // recepcion propone otra fecha y hora: la cita queda como Reagendada
+    const reagendarCita = (id, nuevaFecha, nuevaHora) => {
+        setCitas((prev) => 
+            prev.map((c) =>
+                c.id === id
+                    ? { ...c, fecha: nuevaFecha, hora: nuevaHora, estado: 'Reagendada'}
+                    : c
+            )
+        )
+    }
+
     const eliminarCita = (id) => {
         setCitas((prev) => prev.filter((c) => c.id !== id))
     }
 
     return (
-        <CitasContext.Provider value={{ citas, agregarCita, actualizarEstadoCita, eliminarCita }}>
+        <CitasContext.Provider value={{ citas, agregarCita, actualizarEstadoCita, reagendarCita, eliminarCita }}>
             {children}
         </CitasContext.Provider>
     );
