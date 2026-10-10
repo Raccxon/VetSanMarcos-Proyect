@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { servicios } from '../data/servicios'
 import { useCitas } from '../context/CitasContext.jsx'
+import { rutValido, telefonoValido, fechaNoPasada } from '../utils/validaciones'
 
 export default function AgendarPage() {
     const { agregarCita } = useCitas()
@@ -41,8 +42,19 @@ export default function AgendarPage() {
     const validarFormulario = () => {
         const nuevosErrores = {}
         if (!formData.nombreDuenio.trim()) nuevosErrores.nombreDuenio = 'El nombre del dueño es obligatorio'
-        if (!formData.rutDuenio.trim()) nuevosErrores.rutDuenio = 'El RUT es obligatorio'
-        if (!formData.telefono.trim()) nuevosErrores.telefono = 'El teléfono es obligatorio'
+
+        if (!formData.rutDuenio.trim()) {
+            nuevosErrores.rutDuenio = 'El RUT es obligatorio'
+        } else if (!rutValido(formData.rutDuenio)) {
+            nuevosErrores.rutDuenio = 'Ingrese un RUT válido (ej. 12345678-9)'
+        }
+
+        if (!formData.telefono.trim()) {
+            nuevosErrores.telefono = 'El teléfono es obligatorio'
+        } else if (!telefonoValido(formData.telefono)) {
+            nuevosErrores.telefono = 'Ingrese un celular válido (ej. +56 9 1234 5678)'
+        }
+
         if (!formData.email.trim()) {
             nuevosErrores.email = 'El correo electrónico es obligatorio'
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -50,7 +62,13 @@ export default function AgendarPage() {
         }
         if (!formData.nombreMascota.trim()) nuevosErrores.nombreMascota = 'El nombre de la mascota es obligatorio'
         if (!formData.servicioId) nuevosErrores.servicioId = 'Debe seleccionar un servicio'
-        if (!formData.fecha) nuevosErrores.fecha = 'Debe seleccionar una fecha'
+
+        if (!formData.fecha) {
+            nuevosErrores.fecha = 'Debe seleccionar una fecha'
+        } else if (!fechaNoPasada(formData.fecha)) {
+            nuevosErrores.fecha = 'La fecha no puede ser anterior a hoy'
+        }
+
         if (!formData.hora) nuevosErrores.hora = 'Debe seleccionar un horario'
 
         setErrores(nuevosErrores)
@@ -152,6 +170,7 @@ export default function AgendarPage() {
                 /* FORMULARIO CONTROLADO */
                 <form
                     onSubmit={handleSubmit}
+                    noValidate
                     className="custom-card p-3 p-md-4"
                 >
 

@@ -2,17 +2,17 @@ import { Link } from "react-router-dom"
 import { useCitas } from "../context/CitasContext"
 import { obtenerSesion } from "../utils/sesion"
 import { filtrarCitasPorEmail } from "../utils/citas"
-import { CLASE_BADGE_ESTADO} from "../constants/estadosCitas"
+import { CLASE_BADGE_ESTADO } from "../constants/estadosCitas"
 
 export default function MisCitasPage() {
-    const { citas } = useCitas()
+    const { citas, actualizarEstadoCita } = useCitas()
     const sesion = obtenerSesion()
     const misCitas = filtrarCitasPorEmail(citas, sesion?.email)
 
     return (
         <div className="container py-4">
             <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-                <h1 className = "h3 fw-bold text-success mb-0">Mis Citas</h1>
+                <h1 className="h3 fw-bold text-success mb-0">Mis Citas</h1>
                 <Link to="/agendar" className="btn btn-success">
                     Agendar nueva cita
                 </Link>
@@ -27,7 +27,7 @@ export default function MisCitasPage() {
                     {misCitas.map((cita) => (
                         <div className="col-12 col-md-6 col-xl-4" key={cita.id}>
                             <div className="card h-100 shadow-sm">
-                                <div className="card-body"> 
+                                <div className="card-body">
                                     <div className="d-flex justify-content-between align-items-start mb-2">
                                         <h2 className="h5 mb-0">{cita.nombreMascota} </h2>
                                         <span
@@ -43,6 +43,16 @@ export default function MisCitasPage() {
                                         <strong>Fecha:</strong> {cita.fecha} · {cita.hora}
                                     </p>
                                     <p className="mb-0 text-muted small">N° {cita.id}</p>
+                                    {cita.estado !== 'Cancelada' && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-danger btn-sm mt-3"
+                                            aria-label={`Cancelar cita ${cita.id}`}
+                                            onClick={() => actualizarEstadoCita(cita.id, 'Cancelada')}
+                                        >
+                                            Cancelar cita
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

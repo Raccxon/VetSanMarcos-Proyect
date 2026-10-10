@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useCitas } from "../context/CitasContext";
-import {ESTADOS_CITA, CLASE_BADGE_ESTADO} from "../constants/estadosCitas";
+import { ESTADOS_CITA, CLASE_BADGE_ESTADO } from "../constants/estadosCitas";
 
 export default function GestionCitasPage() {
-    const { citas, actualizarEstadoCita } = useCitas();
+    const { citas, actualizarEstadoCita, eliminarCita } = useCitas();
     const [filtro, setFiltro] = useState("Todas");
 
     const citasVisibles =
@@ -49,6 +49,7 @@ export default function GestionCitasPage() {
                                 <th>Servicio</th>
                                 <th>Fecha y hora</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -80,6 +81,16 @@ export default function GestionCitasPage() {
                                             ))}
                                         </select>
                                     </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger"
+                                            aria-label={`Eliminar cita ${cita.id}`}
+                                            onClick={() => eliminarCita(cita.id)}
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -88,4 +99,4 @@ export default function GestionCitasPage() {
             )}
         </div>
     )
-}               
+}

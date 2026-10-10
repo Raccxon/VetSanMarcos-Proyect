@@ -1,176 +1,242 @@
-import { useState } from "react";
+import { useEffect, useState } from 'react'
+import { ROLES } from '../constants/roles'
+
+const CLAVE_STORAGE = 'usuariosAdmin'
+
+// Texto que se muestra al usuario para cada rol (el valor guardado es el de ROLES)
+const ETIQUETAS_ROL = {
+  [ROLES.ADMIN]: 'Administrador',
+  [ROLES.RECEPCION]: 'Recepcionista',
+  [ROLES.CLIENTE]: 'Cliente',
+}
+
+const USUARIOS_INICIALES = [
+  { id: 1, nombre: 'Ana López', email: 'alopez@sanmarcos.cl', rol: ROLES.ADMIN, estado: 'Activo' },
+  { id: 2, nombre: 'Carlos Gómez', email: 'cgomez@sanmarcos.cl', rol: ROLES.RECEPCION, estado: 'Activo' },
+  { id: 3, nombre: 'Juan Pérez', email: 'jperez@gmail.com', rol: ROLES.CLIENTE, estado: 'Activo' },
+]
+
+const FORM_VACIO = { nombre: '', email: '', rol: ROLES.CLIENTE }
+
+// Lee los usuarios guardados; si no hay (o están dañados) usa los iniciales
+function cargarUsuarios() {
+  try {
+    const guardados = JSON.parse(localStorage.getItem(CLAVE_STORAGE))
+    return Array.isArray(guardados) ? guardados : USUARIOS_INICIALES
+  } catch {
+    return USUARIOS_INICIALES
+  }
+}
 
 export default function AdminPage() {
-  const [usuarios, setUsuarios] = useState([
-    {
-      id: 1,
-      nombre: "Ana López",
-      email: "alopez@sanmarcos.cl",
-      rol: "Administrador",
-      estado: "Activo",
-    },
-    {
-      id: 2,
-      nombre: "Carlos Gómez",
-      email: "cgomez@sanmarcos.cl",
-      rol: "Recepcionista",
-      estado: "Activo",
-    },
-    {
-      id: 3,
-      nombre: "Juan Pérez",
-      email: "jperez@gmail.com",
-      rol: "Cliente",
-      estado: "Activo",
-    },
-  ]);
+  const [usuarios, setUsuarios] = useState(cargarUsuarios)
+  const [form, setForm] = useState(FORM_VACIO)
+  const [editandoId, setEditandoId] = useState(null)
+  const [errores, setErrores] = useState({})
 
-  const [nuevoUsuario, setNuevoUsuario] = useState({
-    nombre: "",
-    email: "",
-    rol: "Cliente",
-  });
+  // Cada vez que cambia la lista se guarda para que no se pierda al recargar
+  useEffect(() => {
+    localStorage.setItem(CLAVE_STORAGE, JSON.stringify(usuarios))
+  }, [usuarios])
 
-  const handleAgregar = (e) => {
-    e.preventDefault();
-    if (!nuevoUsuario.nombre || !nuevoUsuario.email) return;
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    if (errores[name]) {
+      setErrores((prev) => ({ ...prev, [name]: '' }))
+    }
+  }
 
-    const usuarioCreado = {
-      id: Date.now(),
-      ...nuevoUsuario,
-      estado: "Activo",
-    };
+  const validar = () => {
+    const nuevosErrores = {}
+    const email = form.email.trim().toLowerCase()
 
-    setUsuarios([...usuarios, usuarioCreado]);
-    setNuevoUsuario({ nombre: "", email: "", rol: "Cliente" });
-  };
+    if (!form.nombre.trim()) {
+      nuevosErrores.nombre = 'El nombre es obligatorio'
+    }
+
+    if (!email) {
+      nuevosErrores.email = 'El correo electrónico es obligatorio'
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      nuevosErrores.email = 'Ingrese un correo electrónico válido'
+    } else if (usuarios.some((u) => u.id !== editandoId && u.email.toLowerCase() === email)) {
+      nuevosErrores.email = 'Ya existe un usuario con ese correo'
+    }
+
+    setErrores(nuevosErrores)
+    return Object.keys(nuevosErrores).length === 0
+  }
+
+  const limpiarFormulario = () => {
+    setForm(FORM_VACIO)
+    setEditandoId(null)
+    setErrores({})
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!validar()) return
+
+    const datos = {
+      nombre: form.nombre.trim(),
+      email: form.email.trim(),
+      rol: form.rol,
+    }
+
+    if (editandoId !== null) {
+      setUsuarios((prev) =>
+        prev.map((u) => (u.id === editandoId ? { ...u, ...datos } : u))
+      )
+    } else {
+      setUsuarios((prev) => [...prev, { id: Date.now(), ...datos, estado: 'Activo' }])
+    }
+
+    limpiarFormulario()
+  }
+
+  const handleEditar = (usuario) => {
+    setForm({ nombre: usuario.nombre, email: usuario.email, rol: usuario.rol })
+    setEditandoId(usuario.id)
+    setErrores({})
+  }
 
   const handleToggleEstado = (id) => {
-    setUsuarios(
-      usuarios.map((u) =>
+    setUsuarios((prev) =>
+      prev.map((u) =>
         u.id === id
-          ? { ...u, estado: u.estado === "Activo" ? "Inactivo" : "Activo" }
-          : u,
-      ),
-    );
-  };
+          ? { ...u, estado: u.estado === 'Activo' ? 'Inactivo' : 'Activo' }
+          : u
+      )
+    )
+  }
+
+  const handleEliminar = (id) => {
+    setUsuarios((prev) => prev.filter((u) => u.id !== id))
+    if (id === editandoId) limpiarFormulario()
+  }
 
   return (
     <div className="container py-4">
       <h1>Panel de Administración de Usuarios</h1>
-      <p style={{ color: "#666", marginBottom: "25px" }}>
-        Módulo exclusivo para Administradores: gestión de cuentas y roles de
-        acceso.
+      <p className="text-muted mb-4">
+        Módulo exclusivo para Administradores: gestión de cuentas y roles de acceso.
       </p>
 
-      {/* Formulario Crear Usuario */}
-      <div
-        style={{
-          backgroundColor: "#f8f9fa",
-          padding: "20px",
-          borderRadius: "8px",
-          marginBottom: "30px",
-        }}
-      >
-        <h3>Registrar Nuevo Usuario</h3>
-        <form onSubmit={handleAgregar}>
-          <div className="row g-3"></div>
-          <input
-            type="text"
-            placeholder="Nombre Completo"
-            value={nuevoUsuario.nombre}
-            onChange={(e) =>
-              setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })
-            }
-            style={{ padding: "8px" }}
-          />
-          <input
-            type="email"
-            placeholder="Correo Electrónico"
-            value={nuevoUsuario.email}
-            onChange={(e) =>
-              setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })
-            }
-            style={{ padding: "8px" }}
-          />
-          <select
-            value={nuevoUsuario.rol}
-            onChange={(e) =>
-              setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })
-            }
-            style={{ padding: "8px" }}
-          >
-            <option value="Cliente">Cliente</option>
-            <option value="Recepcionista">Recepcionista</option>
-            <option value="Administrador">Administrador</option>
-          </select>
-          <button
-            type="submit"
-            style={{
-              padding: "8px 15px",
-              backgroundColor: "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            + Crear Usuario
-          </button>
-        </form>
+      {/* Formulario crear / editar */}
+      <div className="card bg-light mb-4">
+        <div className="card-body">
+          <h2 className="h4 mb-3">
+            {editandoId !== null ? 'Editar usuario' : 'Registrar nuevo usuario'}
+          </h2>
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="row g-3">
+              <div className="col-12 col-md-4">
+                <label htmlFor="admin-nombre" className="form-label">Nombre completo</label>
+                <input
+                  id="admin-nombre"
+                  name="nombre"
+                  type="text"
+                  className={`form-control ${errores.nombre ? 'is-invalid' : ''}`}
+                  value={form.nombre}
+                  onChange={handleChange}
+                />
+                {errores.nombre && <div className="invalid-feedback">{errores.nombre}</div>}
+              </div>
+
+              <div className="col-12 col-md-4">
+                <label htmlFor="admin-email" className="form-label">Correo electrónico</label>
+                <input
+                  id="admin-email"
+                  name="email"
+                  type="email"
+                  className={`form-control ${errores.email ? 'is-invalid' : ''}`}
+                  value={form.email}
+                  onChange={handleChange}
+                />
+                {errores.email && <div className="invalid-feedback">{errores.email}</div>}
+              </div>
+
+              <div className="col-12 col-md-4">
+                <label htmlFor="admin-rol" className="form-label">Rol</label>
+                <select
+                  id="admin-rol"
+                  name="rol"
+                  className="form-select"
+                  value={form.rol}
+                  onChange={handleChange}
+                >
+                  {Object.values(ROLES).map((rol) => (
+                    <option key={rol} value={rol}>{ETIQUETAS_ROL[rol]}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" className="btn btn-success">
+                  {editandoId !== null ? 'Guardar cambios' : '+ Crear usuario'}
+                </button>
+                {editandoId !== null && (
+                  <button type="button" className="btn btn-outline-secondary" onClick={limpiarFormulario}>
+                    Cancelar edición
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
 
-      {/* Tabla de Usuarios */}
-      <h3>Usuarios del Sistema</h3>
+      {/* Tabla de usuarios */}
+      <h2 className="h4">Usuarios del Sistema</h2>
       <div className="table-responsive">
         <table className="table table-hover align-middle">
-          <thead>
-            <tr
-              style={{
-                backgroundColor: "#343a40",
-                color: "white",
-                textAlign: "left",
-              }}
-            >
-              <th style={{ padding: "10px" }}>ID</th>
-              <th style={{ padding: "10px" }}>Nombre</th>
-              <th style={{ padding: "10px" }}>Email</th>
-              <th style={{ padding: "10px" }}>Rol</th>
-              <th style={{ padding: "10px" }}>Estado</th>
-              <th style={{ padding: "10px" }}>Acción</th>
+          <thead className="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {usuarios.map((u) => (
-              <tr key={u.id} style={{ borderBottom: "1px solid #ddd" }}>
-                <td style={{ padding: "10px" }}>{u.id}</td>
-                <td style={{ padding: "10px" }}>{u.nombre}</td>
-                <td style={{ padding: "10px" }}>{u.email}</td>
-                <td style={{ padding: "10px" }}>
-                  <strong>{u.rol}</strong>
+              <tr key={u.id}>
+                <td>{u.id}</td>
+                <td>{u.nombre}</td>
+                <td>{u.email}</td>
+                <td><strong>{ETIQUETAS_ROL[u.rol] ?? u.rol}</strong></td>
+                <td>
+                  <span className={`badge ${u.estado === 'Activo' ? 'text-bg-success' : 'text-bg-danger'}`}>
+                    {u.estado}
+                  </span>
                 </td>
-                <td
-                  style={{
-                    padding: "10px",
-                    color: u.estado === "Activo" ? "green" : "red",
-                  }}
-                >
-                  {u.estado}
-                </td>
-                <td style={{ padding: "10px" }}>
-                  <button
-                    onClick={() => handleToggleEstado(u.id)}
-                    style={{
-                      padding: "4px 8px",
-                      backgroundColor:
-                        u.estado === "Activo" ? "#ffc107" : "#17a2b8",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {u.estado === "Activo" ? "Desactivar" : "Activar"}
-                  </button>
+                <td>
+                  <div className="d-flex flex-wrap gap-1">
+                    <button
+                      className="btn btn-sm btn-primary"
+                      aria-label={`Editar ${u.nombre}`}
+                      onClick={() => handleEditar(u)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className={`btn btn-sm ${u.estado === 'Activo' ? 'btn-warning' : 'btn-info'}`}
+                      aria-label={`${u.estado === 'Activo' ? 'Desactivar' : 'Activar'} ${u.nombre}`}
+                      onClick={() => handleToggleEstado(u.id)}
+                    >
+                      {u.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      aria-label={`Eliminar ${u.nombre}`}
+                      onClick={() => handleEliminar(u.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -178,5 +244,5 @@ export default function AdminPage() {
         </table>
       </div>
     </div>
-  );
+  )
 }

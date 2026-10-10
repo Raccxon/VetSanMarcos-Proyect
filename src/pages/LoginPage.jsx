@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ROLES } from '../constants/roles'
 import { obtenerSesion } from '../utils/sesion'
+import { avisarCambioSesion } from '../utils/sesionEventos'
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -48,11 +49,17 @@ export default function LoginPage() {
       'userSession',
       JSON.stringify(mockUser)
     )
+
+    // Avisa al Navbar para que actualice sus enlaces
+    avisarCambioSesion()
   }
 
   const handleLogout = () => {
     localStorage.removeItem('userSession')
     setUsuarioLogueado(null)
+
+    // Avisa al Navbar para que actualice sus enlaces
+    avisarCambioSesion()
 
     setCredentials({
       email: '',
@@ -125,7 +132,7 @@ export default function LoginPage() {
                   type="email"
                   id="login-email"
                   name="email"
-                  autoComplete="email" 
+                  autoComplete="email"
                   className="form-control"
                   value={credentials.email}
                   onChange={handleChange}
