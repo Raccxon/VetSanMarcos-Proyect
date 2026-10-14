@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { historialMascotas } from "../data/citas";
+import { cargarFichas } from "../utils/fichas";
 import { calcularEstadoVacuna } from "../utils/vacunas";
 import { obtenerSesion } from "../utils/sesion";
 import { fichasVisibles } from "../utils/historial";
@@ -12,7 +12,7 @@ export default function HistorialPage() {
   const handleBuscar = (e) => {
     e.preventDefault();
     setErrorBusqueda("");
-    const permitidas = fichasVisibles(historialMascotas, obtenerSesion());
+    const permitidas = fichasVisibles(cargarFichas(), obtenerSesion());
 
     const resultado = permitidas.find(
       (item) =>
