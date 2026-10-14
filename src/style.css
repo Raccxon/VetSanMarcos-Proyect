@@ -80,13 +80,15 @@ body {
 }
 
 /* Formularios */
-.form-control, .form-select {
+.form-control,
+.form-select {
   border-radius: 8px;
   padding: 10px 14px;
   border: 1px solid #ced4da;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   border-color: var(--primary-green);
   box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
 }
@@ -109,4 +111,245 @@ body {
 .custom-table td {
   padding: 14px;
   vertical-align: middle;
+}
+
+/* ===== Marco decorativo en las tarjetas de servicios ===== */
+/* Solo afecta a <article class="custom-card"> (ServicioCard) */
+article.custom-card {
+  position: relative;
+}
+
+article.custom-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("./assets/Borde_Servicios.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+  /* para que los clics lleguen al botón "Agendar" */
+}
+
+/* =====================================================
+   REDISEÑO VISUAL (se aplica sobre lo anterior)
+   ===================================================== */
+
+:root {
+  --slate-900: #0f172a;
+  --slate-700: #334155;
+  --slate-500: #64748b;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-50: #f8fafc;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+}
+
+/* ---------- Base ---------- */
+body {
+  background-color: var(--slate-50) !important;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #146c43;
+}
+
+::selection {
+  background: #bbf7d0;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.45);
+  outline-offset: 2px;
+}
+
+/* Aparición suave del contenido de cada página */
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main>* {
+  animation: aparecer 0.35s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main>* {
+    animation: none;
+  }
+}
+
+/* ---------- Navbar ---------- */
+.navbar.bg-success {
+  background: linear-gradient(90deg, #0f5132 0%, #198754 100%) !important;
+  box-shadow: 0 6px 20px rgba(15, 81, 50, 0.25);
+}
+
+.navbar-brand {
+  letter-spacing: 0.01em;
+  font-size: 1.2rem;
+}
+
+.navbar-nav .nav-link {
+  border-radius: 999px;
+}
+
+.navbar-nav .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ---------- Banner de inicio ---------- */
+.hero-section {
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.18), transparent 45%),
+    linear-gradient(135deg, #198754 0%, #0f5132 100%);
+  border-radius: 24px;
+  padding: 72px 24px;
+}
+
+/* ---------- Tarjetas ---------- */
+.custom-card {
+  border: 1px solid var(--slate-200);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.custom-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+}
+
+/* Tarjetas de servicios */
+article.custom-card .badge {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.7rem;
+  padding: 0.5em 0.9em;
+  border-radius: 999px;
+}
+
+article.custom-card h2 {
+  color: var(--slate-900);
+}
+
+.card-service-price {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  border-radius: 10px;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-primary {
+  background-color: var(--blue-600);
+  border-color: var(--blue-600);
+}
+
+.btn-primary:hover {
+  background-color: var(--blue-700);
+  border-color: var(--blue-700);
+}
+
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.btn-success:hover {
+  background-color: #146c43;
+  border-color: #146c43;
+}
+
+/* ---------- Formularios ---------- */
+.form-label {
+  font-weight: 600;
+  color: var(--slate-700);
+  font-size: 0.92rem;
+}
+
+.form-control,
+.form-select {
+  border-radius: 10px;
+  border: 1px solid var(--slate-300);
+  background-color: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control::placeholder {
+  color: #94a3b8;
+}
+
+/* ---------- Tablas ---------- */
+.table-responsive {
+  background: #fff;
+  border: 1px solid var(--slate-200);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead th {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.07em;
+  padding: 14px 16px;
+  border-bottom: none;
+}
+
+.table tbody td {
+  padding: 14px 16px;
+  color: var(--slate-700);
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f0fdf4;
+}
+
+/* ---------- Alertas y etiquetas ---------- */
+.alert {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Validación de formularios ---------- */
+.invalid-feedback {
+  font-size: 0.82rem;
+  font-weight: 500;
 }
