@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom'
 
-export default function RutaProtegida({ children, rolRequerido }) {
+export default function RutaProtegida({ children, rolRequerido, rolesPermitidos }) {
   let session = null
 
   try {
@@ -15,9 +15,11 @@ export default function RutaProtegida({ children, rolRequerido }) {
     return <Navigate to="/login" replace />
   }
 
+  const permitidos = rolesPermitidos ?? (rolRequerido ? [rolRequerido] : null)
+
   if (
-    rolRequerido &&
-    session.rol !== rolRequerido
+    permitidos &&
+    !permitidos.includes(session.rol)
   ) {
     return (
       <div className="container py-5 text-center">

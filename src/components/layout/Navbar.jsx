@@ -4,15 +4,16 @@ import { ROLES } from '../../constants/roles'
 import { obtenerSesion } from '../../utils/sesion'
 import { EVENTO_SESION, avisarCambioSesion } from '../../utils/sesionEventos'
 
-// "rol" indica quién puede ver el enlace; sin "rol" lo ve cualquiera
+// "roles" indica quiénes pueden ver el enlace; sin "roles" lo ve cualquiera
 const ENLACES = [
     { to: '/', texto: 'Inicio' },
     { to: '/servicios', texto: 'Servicios' },
     { to: '/agendar', texto: 'Agendar Cita' },
-    { to: '/mis-citas', texto: 'Mis Citas', rol: ROLES.CLIENTE },
-    { to: '/gestion-citas', texto: 'Gestión de Citas', rol: ROLES.RECEPCION },
+    { to: '/mis-citas', texto: 'Mis Citas', roles: [ROLES.CLIENTE] },
+    { to: '/gestion-citas', texto: 'Gestión de Citas', roles: [ROLES.RECEPCION, ROLES.ADMIN] },
+    { to: '/fichas', texto: 'Gestión de Fichas', roles: [ROLES.RECEPCION, ROLES.ADMIN] },
     { to: '/historial', texto: 'Ficha y Vacunas' },
-    { to: '/admin', texto: 'Administración', rol: ROLES.ADMIN },
+    { to: '/admin', texto: 'Administración', roles: [ROLES.ADMIN] },
 ]
 
 function Navbar() {
@@ -40,7 +41,7 @@ function Navbar() {
     }
 
     const enlacesVisibles = ENLACES.filter(
-        (enlace) => !enlace.rol || enlace.rol === sesion?.rol
+        (enlace) => !enlace.roles || enlace.roles.includes(sesion?.rol)
     )
 
     return (

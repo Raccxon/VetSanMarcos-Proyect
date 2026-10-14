@@ -43,6 +43,7 @@ describe('Navbar', () => {
 
         expect(enlace('Mis Citas')).toBeInTheDocument()
         expect(enlace('Gestión de Citas')).not.toBeInTheDocument()
+        expect(enlace('Gestión de Fichas')).not.toBeInTheDocument()
         expect(enlace('Administración')).not.toBeInTheDocument()
         expect(screen.getByText('Hola, Ana')).toBeInTheDocument()
     })
@@ -53,16 +54,18 @@ describe('Navbar', () => {
 
         expect(enlace('Gestión de Citas')).toBeInTheDocument()
         expect(enlace('Mis Citas')).not.toBeInTheDocument()
+        expect(enlace('Gestión de Fichas')).toBeInTheDocument()
         expect(enlace('Administración')).not.toBeInTheDocument()
     })
 
-    it('el administrador ve Administración', () => {
+    it('el administrador ve Administración, Gestión de Citas y Gestión de Fichas', () => {
         iniciarSesion(ROLES.ADMIN)
         renderNavbar()
 
         expect(enlace('Administración')).toBeInTheDocument()
+        expect(enlace('Gestión de Citas')).toBeInTheDocument()
+        expect(enlace('Gestión de Fichas')).toBeInTheDocument()
         expect(enlace('Mis Citas')).not.toBeInTheDocument()
-        expect(enlace('Gestión de Citas')).not.toBeInTheDocument()
     })
 
     it('cerrar sesión borra la sesión, avisa el cambio y vuelve a mostrar Iniciar Sesión', () => {

@@ -11,6 +11,7 @@ import AdminPage from './pages/AdminPage'
 import MisCitasPage from './pages/MisCitasPage'
 import { ROLES } from './constants/roles'
 import GestionCitasPage from './pages/GestionCitasPage'
+import FichasPage from './pages/FichasPage'
 
 function App() {
   return (
@@ -47,7 +48,7 @@ function App() {
         <Route
           path="admin"
           element={
-            <RutaProtegida rolRequerido={ROLES.ADMIN}>
+            <RutaProtegida rolesPermitidos={ROLES.ADMIN}>
               <AdminPage />
             </RutaProtegida>
           }
@@ -56,7 +57,7 @@ function App() {
         <Route
           path="gestion-citas"
           element={
-            <RutaProtegida rolRequerido={ROLES.RECEPCION}>
+            <RutaProtegida rolesPermitidos={[ROLES.RECEPCION, ROLES.ADMIN]}>
               <GestionCitasPage/>
             </RutaProtegida>
           }
@@ -65,8 +66,17 @@ function App() {
         <Route
           path="mis-citas"
           element={
-            <RutaProtegida rolRequerido={ROLES.CLIENTE}>
+            <RutaProtegida rolesPermitidos={ROLES.CLIENTE}>
               <MisCitasPage />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="fichas"
+          element={
+            <RutaProtegida rolesPermitidos={[ROLES.RECEPCION, ROLES.ADMIN]}>
+              <FichasPage />
             </RutaProtegida>
           }
         />

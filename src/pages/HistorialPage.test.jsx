@@ -118,4 +118,18 @@ describe('HistorialPage', () => {
 
         expect(screen.queryByText(/Ficha del paciente/)).not.toBeInTheDocument()
     })
+
+    it('muestra una ficha registrada por recepcion', () => {
+        localStorage.setItem('fichas',JSON.stringify([{
+            rutDuenio: '11222333-4',
+            emailDuenio: 'maria@correo.cl',
+            nombreDuenio: 'Maria Soto',
+            mascota: { nombre: 'Luna', especie: 'Gato', raza: '', edad: '', chip: ''},
+            vacunas: [],
+            atenciones: [],
+        }]))
+        render(<HistorialPage />)
+        buscar('11222333-4')
+        expect(screen.getByText('Ficha del Paciente: Luna')).toBeInTheDocument()
+    })
 })
