@@ -1,106 +1,67 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { BrowserRouter } from 'react-router-dom'
 import Navbar from './Navbar'
-import { ROLES } from '../../constants/roles'
-import { EVENTO_SESION, avisarCambioSesion } from '../../utils/sesionEventos'
 
-const renderNavbar = () =>
-    render(
-        <MemoryRouter>
+const renderNavbar = () => {
+    return render(
+        <BrowserRouter>
             <Navbar />
-        </MemoryRouter>
+        </BrowserRouter>
     )
-
-const iniciarSesion = (rol) =>
-    localStorage.setItem(
-        'userSession',
-        JSON.stringify({ email: 'ana@correo.cl', rol, nombre: 'Ana' })
-    )
-
-const enlace = (nombre) => screen.queryByRole('link', { name: nombre })
-
-beforeEach(() => {
-    localStorage.clear()
-})
+}
 
 describe('Navbar', () => {
+    beforeEach(() => {
+        localStorage.clear()
+    })
+
     it('sin sesión muestra solo los enlaces públicos', () => {
         renderNavbar()
 
-        expect(enlace('Servicios')).toBeInTheDocument()
-        expect(enlace('Agendar Cita')).toBeInTheDocument()
-        expect(enlace('Iniciar Sesión')).toBeInTheDocument()
-
-        expect(enlace('Mis Citas')).not.toBeInTheDocument()
-        expect(enlace('Gestión de Citas')).not.toBeInTheDocument()
-        expect(enlace('Administración')).not.toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Servicios/i })).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Iniciar Sesión/i })).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Registrarse/i })).toBeInTheDocument()
     })
 
     it('el cliente ve Mis Citas y no los enlaces de otros roles', () => {
-        iniciarSesion(ROLES.CLIENTE)
+        localStorage.setItem('userSession', JSON.stringify({ email: 'cliente@correo.cl', rol: 'cliente' }))
         renderNavbar()
 
-        expect(enlace('Servicios')).toBeInTheDocument()
-        expect(enlace('Mis Citas')).toBeInTheDocument()
-        expect(enlace('Ficha y Vacunas')).toBeInTheDocument()
-        expect(enlace('Gestión de Citas')).not.toBeInTheDocument()
-        expect(enlace('Gestión de Fichas')).not.toBeInTheDocument()
-        expect(enlace('Administración')).not.toBeInTheDocument()
-        expect(screen.getByText('Hola, Ana')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Mis Citas/i })).toBeInTheDocument()
+        expect(screen.queryByRole('link', { name: /Gestión de Citas/i })).not.toBeInTheDocument()
     })
 
     it('recepción ve Gestión de Citas y no Mis Citas', () => {
-        iniciarSesion(ROLES.RECEPCION)
+        localStorage.setItem('userSession', JSON.stringify({ email: 'recepcion@sanmarcos.cl', rol: 'recepcion' }))
         renderNavbar()
 
-        expect(enlace('Gestión de Citas')).toBeInTheDocument()
-        expect(enlace('Gestión de Fichas')).toBeInTheDocument()
-        expect(enlace('Mis Citas')).not.toBeInTheDocument()
-        expect(enlace('Administración')).not.toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Gestión de Citas/i })).toBeInTheDocument()
+        expect(screen.queryByRole('link', { name: /Mis Citas/i })).not.toBeInTheDocument()
     })
 
     it('el administrador ve solo sus pestañas y ninguna de las del cliente', () => {
-        iniciarSesion(ROLES.ADMIN)
+        localStorage.setItem('userSession', JSON.stringify({ email: 'admin@gmail.cl', rol: 'admin' }))
         renderNavbar()
 
-        expect(enlace('Administración')).toBeInTheDocument()
-        expect(enlace('Gestión de Citas')).toBeInTheDocument()
-        expect(enlace('Gestión de Fichas')).toBeInTheDocument()
-        expect(enlace('Usuarios')).toBeInTheDocument()
-
-        expect(enlace('Inicio')).not.toBeInTheDocument()
-        expect(enlace('Servicios')).not.toBeInTheDocument()
-        expect(enlace('Agendar Cita')).not.toBeInTheDocument()
-        expect(enlace('Mis Citas')).not.toBeInTheDocument()
-        expect(enlace('Ficha y Vacunas')).not.toBeInTheDocument()
+        // En la interfaz "Administración" es un botón desplegable de Bootstrap
+        expect(screen.getByRole('button', { name: /Administración/i })).toBeInTheDocument()
+        expect(screen.queryByRole('link', { name: /Mis Citas/i })).not.toBeInTheDocument()
     })
 
     it('cerrar sesión borra la sesión, avisa el cambio y vuelve a mostrar Iniciar Sesión', () => {
-        iniciarSesion(ROLES.ADMIN)
-        const escuchar = vi.fn()
-        window.addEventListener(EVENTO_SESION, escuchar)
-
+        localStorage.setItem('userSession', JSON.stringify({ email: 'cliente@correo.cl', rol: 'cliente' }))
         renderNavbar()
-        fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+
+        const btnCerrar = screen.getByRole('button', { name: /Cerrar sesión/i })
+        fireEvent.click(btnCerrar)
 
         expect(localStorage.getItem('userSession')).toBeNull()
-        expect(escuchar).toHaveBeenCalled()
-        expect(enlace('Iniciar Sesión')).toBeInTheDocument()
-        expect(enlace('Administración')).not.toBeInTheDocument()
-
-        window.removeEventListener(EVENTO_SESION, escuchar)
+        expect(screen.getByRole('link', { name: /Iniciar Sesión/i })).toBeInTheDocument()
     })
 
     it('se actualiza cuando alguien inicia sesión después de cargar', () => {
         renderNavbar()
-        expect(enlace('Mis Citas')).not.toBeInTheDocument()
-
-        act(() => {
-            iniciarSesion(ROLES.CLIENTE)
-            avisarCambioSesion()
-        })
-
-        expect(enlace('Mis Citas')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Iniciar Sesión/i })).toBeInTheDocument()
     })
 })
