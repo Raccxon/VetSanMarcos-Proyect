@@ -1,64 +1,74 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useEffect, useState, useContext } from "react";
 
-const CitasContext = createContext();
+const CLAVE_STORAGE = "citas";
 
-export function CitasProvider({ children }) {
-    // Cargar citas guardadas o inicializar con citas de ejemplo
-    const [citas, setCitas] = useState(() => {
-        const guardadas = localStorage.getItem('vetsanmarcos_citas');
-        if (guardadas) {
-            try {
-                return JSON.parse(guardadas);
-            } catch (e) {
-                console.error('Error al cargar citas de localStorage', e);
-            }
-        }
-        return [
-            {
-                id: 'CIT-1001',
-                nombreDuenio: 'Ana López',
-                rutDuenio: '12345678-9',
-                telefono: '+56 9 87654321 (Chile)',
-                email: 'ana@gmail.com',
-                nombreMascota: 'Firulais',
-                especie: 'Perro',
-                servicioId: '1',
-                servicioNombre: 'Consulta General',
-                fecha: new Date().toISOString().split('T')[0],
-                hora: '09:00',
-                duracion: 30,
-                precio: 20000,
-                estado: 'Confirmada'
-            }
-        ];
-    });
+const CitasContext = createContext(null);
 
-    // Guardar en localStorage ante cualquier cambio
+function cargarCitas() {
+    try {
+        const guardadas = JSON.parse(localStorage.getItem(CLAVE_STORAGE));
+        return Array.isArray(guardadas) ? guardadas : [];
+    } catch {
+        return [];
+    }
+}
+
+// provider guarda estado y se lo ofrece a hijos
+export function CitasProvider({ children, citasIniciales}) {
+    const [citas, setCitas] = useState(() => citasIniciales ?? cargarCitas());
+
+    // cada cambio es guardado para que no se pierda al recargar
     useEffect(() => {
-        localStorage.setItem('vetsanmarcos_citas', JSON.stringify(citas));
-    }, [citas]);
+        if (citasIniciales === undefined) {
+            localStorage.setItem(CLAVE_STORAGE, JSON.stringify(citas));
+        }
+    }, [citas, citasIniciales]);
 
     const agregarCita = (nuevaCita) => {
-        setCitas((prev) => [nuevaCita, ...prev]);
+        setCitas((prev) => [...prev, nuevaCita]);
     };
 
-    const cambiarEstadoCita = (id, nuevoEstado) => {
+    const actualizarEstadoCita = (id, nuevoEstado) => {
+        setCitas((prev) => 
+            prev.map((c) => (c.id === id ? {...c, estado: nuevoEstado} : c))
+        )
+    }
+
+    // recepcion propone otra fecha y hora: la cita queda como reagendada
+    const reagendarCita = (id, nuevaFecha, nuevaHora) => {
         setCitas((prev) =>
-            prev.map((c) => (c.id === id ? { ...c, estado: nuevoEstado } : c))
-        );
-    };
+            prev.map((c) =>
+                c.id === id
+                    ? {...c, fecha: nuevaFecha, hora: nuevaHora, estado: 'Reagendada'}
+                    : c
+            )
+        )
+    }
+
+    const eliminarCita = (id) => {
+        setCitas((prev) => prev.filter((c) => c.id !== id))
+    }
 
     return (
-        <CitasContext.Provider value={{ citas, agregarCita, cambiarEstadoCita }}>
+        <CitasContext.Provider
+            value={{
+                citas,
+                agregarCita,
+                actualizarEstadoCita,
+                reagendarCita,
+                eliminarCita,
+            }}
+        >
             {children}
         </CitasContext.Provider>
     );
 }
 
+// cualquier pagina lo llama para leer/modifcar las citas
 export function useCitas() {
-    const context = useContext(CitasContext);
-    if (!context) {
-        throw new Error('useCitas debe usarse dentro de un CitasProvider');
+    const ctx = useContext(CitasContext)
+    if (!ctx) {
+        throw new Error("useCitas debe estar dentro de un CitasProvider")
     }
-    return context;
+    return ctx;
 }

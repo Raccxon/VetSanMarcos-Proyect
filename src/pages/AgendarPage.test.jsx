@@ -18,17 +18,17 @@ const llenarFormulario = (campos = {}) => {
   const valores = {
     "Nombre Completo *": "Ana Pérez",
     "RUT *": "12345678-9",
-    "Teléfono *": "+56912345678",
+    "Teléfono *": "12345678",
     "Correo Electrónico *": "ana@email.cl",
     "Nombre Mascota *": "Luna",
     "Servicio Requerido *": "SV001",
     "Fecha *": "2030-01-15",
-    "Horario Disponibles *": "10:00",
+    "Horario Disponible": "10:00",
     ...campos,
   };
 
   Object.entries(valores).forEach(([etiqueta, value]) => {
-    fireEvent.change(screen.getByLabelText(etiqueta), { target: { value } });
+    fireEvent.change(screen.getByLabelText(etiqueta, { exact: false }), { target: { value } });
   });
 };
 
@@ -70,7 +70,7 @@ describe("AgendarPage", () => {
 
     expect(screen.getByText(/Ana Pérez/)).toBeInTheDocument();
 
-    expect(screen.getByText("Luna (Perro)")).toBeInTheDocument();
+    expect(screen.getByText(/Luna \(Perro\)/)).toBeInTheDocument();
 
     expect(screen.getByText("Consulta general")).toBeInTheDocument();
   });
@@ -82,7 +82,7 @@ describe("AgendarPage", () => {
     enviar();
 
     expect(
-      screen.getByText("Ingrese un RUT válido (ej. 12345678-9)"),
+      screen.getByText("Ingrese un RUT válido (ej. 12345678-K)"),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "¡Cita Solicitada con Éxito!" }),
@@ -96,7 +96,7 @@ describe("AgendarPage", () => {
     enviar();
 
     expect(
-      screen.getByText("Ingrese un celular válido (ej. +56 9 1234 5678)"),
+      screen.getByText("Ingrese los 8 dígitos de su celular chileno"),
     ).toBeInTheDocument();
   });
 

@@ -7,11 +7,12 @@ import ServiciosPage from './pages/ServiciosPage'
 import AgendarPage from './pages/AgendarPage'
 import HistorialPage from './pages/HistorialPage'
 import LoginPage from './pages/LoginPage'
-import AdminPage from './pages/AdminPage'
+import AdminPage from './pages/UsuariosPage'
 import MisCitasPage from './pages/MisCitasPage'
 import { ROLES } from './constants/roles'
 import GestionCitasPage from './pages/GestionCitasPage'
 import FichasPage from './pages/FichasPage'
+import UsuariosPage from './pages/UsuariosPage'
 
 function App() {
   return (
@@ -48,8 +49,17 @@ function App() {
         <Route
           path="admin"
           element={
-            <RutaProtegida rolesPermitidos={ROLES.ADMIN}>
+            <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
               <AdminPage />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="usuarios"
+          element={
+            <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
+              <UsuariosPage />
             </RutaProtegida>
           }
         />
@@ -58,7 +68,7 @@ function App() {
           path="gestion-citas"
           element={
             <RutaProtegida rolesPermitidos={[ROLES.RECEPCION, ROLES.ADMIN]}>
-              <GestionCitasPage/>
+              <GestionCitasPage />
             </RutaProtegida>
           }
         />
@@ -66,7 +76,7 @@ function App() {
         <Route
           path="mis-citas"
           element={
-            <RutaProtegida rolesPermitidos={ROLES.CLIENTE}>
+            <RutaProtegida rolesPermitidos={[ROLES.CLIENTE]}>
               <MisCitasPage />
             </RutaProtegida>
           }
@@ -80,7 +90,6 @@ function App() {
             </RutaProtegida>
           }
         />
-
 
       </Route>
 
