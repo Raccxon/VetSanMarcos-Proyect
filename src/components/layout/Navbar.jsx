@@ -31,7 +31,6 @@ const ENLACES_POR_ROL = {
         { to: '/historial', texto: 'Ficha y Vacunas' },
         { to: '/gestion-citas', texto: 'Gestión de Citas' },
         { to: '/fichas', texto: 'Gestión de Fichas' },
-        { texto: 'Administración', submenu: VISTAS_ADMIN },
     ],
 
     [ROLES.ADMIN]: [
@@ -70,9 +69,7 @@ function Navbar() {
     const enlacesVisibles = ENLACES_POR_ROL[rol] ?? PUBLICOS
 
     const inicio =
-        rol === ROLES.ADMIN || rol === ROLES.RECEPCION
-            ? '/admin'
-            : '/'
+        rol === ROLES.ADMIN ? '/admin' : '/'
 
     const vistaActual =
         new URLSearchParams(search).get('vista') ?? 'dashboard'
