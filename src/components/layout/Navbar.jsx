@@ -14,6 +14,7 @@ const ENLACES = [
     { to: '/fichas', texto: 'Gestión de Fichas', roles: [ROLES.RECEPCION, ROLES.ADMIN] },
     { to: '/historial', texto: 'Ficha y Vacunas' },
     { to: '/admin', texto: 'Administración', roles: [ROLES.ADMIN] },
+    { to: '/usuarios', texto: 'Usuarios', roles: [ROLES.ADMIN] },
 ]
 
 function Navbar() {

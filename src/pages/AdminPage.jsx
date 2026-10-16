@@ -4,7 +4,7 @@ import { obtenerFechaHoy } from '../utils/fechas';
 
 export default function AdminPage() {
   const [pestaniaActiva, setPestaniaActiva] = useState('dashboard');
-  const { citas, cambiarEstadoCita } = useCitas();
+  const { citas, actualizarEstadoCita } = useCitas();
 
   // Filtros de búsqueda
   const [busqueda, setBusqueda] = useState('');
@@ -367,7 +367,7 @@ export default function AdminPage() {
                         <select
                           className="form-select form-select-sm"
                           value={c.estado}
-                          onChange={(e) => cambiarEstadoCita(c.id, e.target.value)}
+                          onChange={(e) => actualizarEstadoCita(c.id, e.target.value)}
                         >
                           <option value="Pendiente">Pendiente</option>
                           <option value="Confirmada">Confirmada</option>
