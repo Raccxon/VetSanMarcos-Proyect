@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { useCitas } from '../context/CitasContext.jsx';
 import { obtenerFechaHoy } from '../utils/fechas';
 
-export default function AdminPage() {
-  const [pestaniaActiva, setPestaniaActiva] = useState('dashboard');
+export default function AdminPage({ vista, onCambiarVista }) {
+  // Si el Navbar controla la vista se usa la prop; si no, el estado local
+  const [vistaLocal, setVistaLocal] = useState('dashboard');
+  const pestaniaActiva = vista ?? vistaLocal;
+  const setPestaniaActiva = onCambiarVista ?? setVistaLocal;
   const { citas, actualizarEstadoCita } = useCitas();
 
   // Filtros de búsqueda
@@ -13,10 +16,10 @@ export default function AdminPage() {
 
   // Servicios parametrizables en estado local
   const [serviciosStock, setServiciosStock] = useState([
-    { id: 1, nombre: 'Consulta General', categoria: 'Atención Médica', stock: 15, duracion: 30, precio: 20000 },
-    { id: 2, nombre: 'Vacunación Séxtuple', categoria: 'Prevención y Salud', stock: 25, duracion: 15, precio: 18000 },
-    { id: 3, nombre: 'Cirugía Menor', categoria: 'Procedimientos y Cirugía', stock: 5, duracion: 60, precio: 75000 },
-    { id: 4, nombre: 'Examen de Sangre', categoria: 'Diagnóstico y Laboratorio', stock: 10, duracion: 45, precio: 25000 }
+    { id: 1, nombre: 'Consulta General', categoria: 'Consultas y Urgencias', stock: 15, duracion: 30, precio: 20000 },
+    { id: 2, nombre: 'Vacunación Séxtuple', categoria: 'Vacunación', stock: 25, duracion: 15, precio: 18000 },
+    { id: 3, nombre: 'Cirugía Menor', categoria: 'Procedimientos', stock: 5, duracion: 60, precio: 75000 },
+    { id: 4, nombre: 'Examen de Sangre', categoria: 'Procedimientos', stock: 10, duracion: 45, precio: 25000 }
   ]);
 
   // Formulario para nuevo servicio
@@ -29,11 +32,10 @@ export default function AdminPage() {
   });
 
   const [categorias] = useState([
-    'Atención Médica',
-    'Prevención y Salud',
-    'Procedimientos y Cirugía',
-    'Diagnóstico y Laboratorio',
-    'Estética y Bienestar'
+    'Consultas y Urgencias',
+    'Procedimientos',
+    'Vacunación',
+    'Peluquería y Estética'
   ]);
 
   // Obtener lista dinámica de clientes a partir de las citas agendadas
@@ -132,7 +134,7 @@ export default function AdminPage() {
         <span className="badge bg-primary fs-6">Modo Administrador</span>
       </div>
 
-      <ul className="nav nav-tabs mb-4">
+      <ul className={`nav nav-tabs mb-4 ${vista ? 'd-none' : ''}`}>
         <li className="nav-item">
           <button className={`nav-link ${pestaniaActiva === 'dashboard' ? 'active fw-bold' : ''}`} onClick={() => setPestaniaActiva('dashboard')}>
             Dashboard
@@ -164,19 +166,19 @@ export default function AdminPage() {
         <div className="row g-3">
           <div className="col-12 col-md-4">
             <div className="card text-white bg-primary p-3">
-              <h4>Citas Totales</h4>
+              <h4 className="text-white">Citas Totales</h4>
               <p className="display-6 m-0">{citas.length}</p>
             </div>
           </div>
           <div className="col-12 col-md-4">
             <div className="card text-white bg-success p-3">
-              <h4>Servicios Activos</h4>
+              <h4 className="text-white">Servicios Activos</h4>
               <p className="display-6 m-0">{serviciosStock.length}</p>
             </div>
           </div>
           <div className="col-12 col-md-4">
-            <div className="card text-white bg-warning p-3">
-              <h4>Clientes Registrados</h4>
+            <div className="card text-dark bg-warning p-3">
+              <h4 className="text-dark">Clientes Registrados</h4>
               <p className="display-6 m-0">{clientesDinamicos.length}</p>
             </div>
           </div>

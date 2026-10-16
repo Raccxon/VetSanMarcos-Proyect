@@ -1,7 +1,7 @@
 export const servicios = [
   {
     id: "SV001",
-    categoria: "Consultas",
+    categoria: "Consultas y Urgencias",
     nombre: "Consulta general",
     especie: "Perro / Gato",
     duracion: "30 min",
@@ -10,7 +10,7 @@ export const servicios = [
   },
   {
     id: "SV002",
-    categoria: "Consultas",
+    categoria: "Consultas y Urgencias",
     nombre: "Consulta urgencia",
     especie: "Perro / Gato",
     duracion: "30 min",
@@ -46,7 +46,7 @@ export const servicios = [
   },
   {
     id: "DE001",
-    categoria: "Desparasitación",
+    categoria: "Procedimientos",
     nombre: "Desparasitación interna",
     especie: "Perro / Gato",
     duracion: "5 min",
@@ -55,7 +55,7 @@ export const servicios = [
   },
   {
     id: "EX001",
-    categoria: "Exámenes",
+    categoria: "Procedimientos",
     nombre: "Hemograma completo",
     especie: "Perro / Gato",
     duracion: "30 min",
@@ -64,11 +64,38 @@ export const servicios = [
   },
   {
     id: "OT003",
-    categoria: "Otros",
+    categoria: "Procedimientos",
     nombre: "Microchip identificación",
     especie: "Perro / Gato",
     duracion: "10 min",
     precio: 15000,
     observaciones: "Incluye registro en la plataforma",
+  },
+  {
+    id: "PE001", categoria: "Peluquería y Estética",
+    nombre: "Baño y secado",
+    especie: "Perro / Gato",
+    duracion: "60 min",
+    precio: 15000,
+    observaciones: "Incluye corte de uñas"
+  },
+
+  {
+    id: "PE002",
+    categoria: "Peluquería y Estética",
+    nombre: "Corte de pelo",
+    especie: "Perro",
+    duracion: "60 min",
+    precio: 20000,
+    observaciones: "Según raza y tamaño"
+  },
+  {
+    id: "PE003",
+    categoria: "Peluquería y Estética",
+    nombre: "Baño y corte completo",
+    especie: "Perro",
+    duracion: "90 min",
+    precio: 30000,
+    observaciones: "Incluye limpieza de oídos"
   },
 ];

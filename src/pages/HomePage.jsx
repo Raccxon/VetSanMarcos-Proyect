@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import MapaClinica from '../components/ui/MapaClinica'
+import { CATEGORIAS } from '../constants/categorias'
 
 export default function HomePage() {
     return (
@@ -24,31 +25,22 @@ export default function HomePage() {
                 </div>
             </div>
 
-            {/* Secciones Informativas */}
+            {/* Categorías: cada cuadro lleva a los servicios de esa categoría */}
             <div className="row g-4 mb-5">
-                <div className="col-md-4">
-                    <div className="custom-card p-4 text-center h-100">
-                        <div className="fs-1 text-success mb-2">🩺</div>
-                        <h4 className="fw-bold text-success">Consultas y Urgencias</h4>
-                        <p className="text-muted">Atención médica general y especializada lista para resolver cualquier emergencia.</p>
+                {CATEGORIAS.map((cat) => (
+                    <div className="col-12 col-md-6 col-lg-3" key={cat.nombre}>
+                        <Link
+                            to={`/servicios?categoria=${encodeURIComponent(cat.nombre)}`}
+                            className="text-decoration-none"
+                        >
+                            <div className="custom-card p-4 text-center h-100">
+                                <div className="fs-1 text-success mb-2">{cat.icono}</div>
+                                <h4 className="fw-bold text-success">{cat.nombre}</h4>
+                                <p className="text-muted">{cat.descripcion}</p>
+                            </div>
+                        </Link>
                     </div>
-                </div>
-
-                <div className="col-md-4">
-                    <div className="custom-card p-4 text-center h-100">
-                        <div className="fs-1 text-success mb-2">💉</div>
-                        <h4 className="fw-bold text-success">Vacunación y Fichas</h4>
-                        <p className="text-muted">Mantén al día el carnet sanitario y el historial clínico de tus mascotas en un solo lugar.</p>
-                    </div>
-                </div>
-
-                <div className="col-md-4">
-                    <div className="custom-card p-4 text-center h-100">
-                        <div className="fs-1 text-success mb-2">✂️</div>
-                        <h4 className="fw-bold text-success">Peluquería y Estética</h4>
-                        <p className="text-muted">Servicios de baño y corte para mantener la higiene y bienestar de tus animales.</p>
-                    </div>
-                </div>
+                ))}
             </div>
 
             {/* Ubicación y Mapa */}

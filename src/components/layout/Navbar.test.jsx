@@ -41,7 +41,9 @@ describe('Navbar', () => {
         iniciarSesion(ROLES.CLIENTE)
         renderNavbar()
 
+        expect(enlace('Servicios')).toBeInTheDocument()
         expect(enlace('Mis Citas')).toBeInTheDocument()
+        expect(enlace('Ficha y Vacunas')).toBeInTheDocument()
         expect(enlace('Gestión de Citas')).not.toBeInTheDocument()
         expect(enlace('Gestión de Fichas')).not.toBeInTheDocument()
         expect(enlace('Administración')).not.toBeInTheDocument()
@@ -53,19 +55,25 @@ describe('Navbar', () => {
         renderNavbar()
 
         expect(enlace('Gestión de Citas')).toBeInTheDocument()
-        expect(enlace('Mis Citas')).not.toBeInTheDocument()
         expect(enlace('Gestión de Fichas')).toBeInTheDocument()
+        expect(enlace('Mis Citas')).not.toBeInTheDocument()
         expect(enlace('Administración')).not.toBeInTheDocument()
     })
 
-    it('el administrador ve Administración, Gestión de Citas y Gestión de Fichas', () => {
+    it('el administrador ve solo sus pestañas y ninguna de las del cliente', () => {
         iniciarSesion(ROLES.ADMIN)
         renderNavbar()
 
         expect(enlace('Administración')).toBeInTheDocument()
         expect(enlace('Gestión de Citas')).toBeInTheDocument()
         expect(enlace('Gestión de Fichas')).toBeInTheDocument()
+        expect(enlace('Usuarios')).toBeInTheDocument()
+
+        expect(enlace('Inicio')).not.toBeInTheDocument()
+        expect(enlace('Servicios')).not.toBeInTheDocument()
+        expect(enlace('Agendar Cita')).not.toBeInTheDocument()
         expect(enlace('Mis Citas')).not.toBeInTheDocument()
+        expect(enlace('Ficha y Vacunas')).not.toBeInTheDocument()
     })
 
     it('cerrar sesión borra la sesión, avisa el cambio y vuelve a mostrar Iniciar Sesión', () => {

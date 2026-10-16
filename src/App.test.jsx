@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter} from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import App from './App'
 import { CitasProvider } from './context/CitasContext.jsx'
 
-const renderEnRuta = (ruta) => 
+const renderEnRuta = (ruta) =>
     render(
         <MemoryRouter initialEntries={[ruta]}>
             <CitasProvider>
@@ -13,10 +13,10 @@ const renderEnRuta = (ruta) =>
         </MemoryRouter>
     )
 
-const iniciarSesion = (rol) => 
+const iniciarSesion = (rol) =>
     localStorage.setItem(
         'userSession',
-        JSON.stringify({email: 'ana@correo.cl', rol: rol, nombre: 'Ana'})
+        JSON.stringify({ email: 'ana@correo.cl', rol: rol, nombre: 'Ana' })
     )
 
 beforeEach(() => {
@@ -25,9 +25,9 @@ beforeEach(() => {
 
 describe('Rutas protegidas en App', () => {
     it('un dueño con sesion puede entrar a Mis citas', () => {
-        iniciarSesion("cliente")
+        iniciarSesion('cliente')
         renderEnRuta('/mis-citas')
-        expect(screen.getByRole('heading', {name: 'Mis Citas'})).toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: 'Mis Citas' })).toBeInTheDocument()
     })
 
     it('un dueño sin sesion es redirigido a login', () => {
@@ -36,7 +36,19 @@ describe('Rutas protegidas en App', () => {
     })
 
     it('un recepcionista no puede entrar a Mis citas', () => {
-        iniciarSesion("recepcion")
+        iniciarSesion('recepcion')
+        renderEnRuta('/mis-citas')
+        expect(screen.getByText('Acceso restringido')).toBeInTheDocument()
+    })
+
+    it('un cliente no puede entrar al panel de administración', () => {
+        iniciarSesion('cliente')
+        renderEnRuta('/admin')
+        expect(screen.getByText('Acceso restringido')).toBeInTheDocument()
+    })
+
+    it('el admin no puede entrar a Mis citas (es solo de clientes)', () => {
+        iniciarSesion('admin')
         renderEnRuta('/mis-citas')
         expect(screen.getByText('Acceso restringido')).toBeInTheDocument()
     })

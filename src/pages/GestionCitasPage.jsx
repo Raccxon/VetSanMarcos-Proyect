@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useCitas } from "../context/CitasContext";
 import { ESTADOS_CITA, CLASE_BADGE_ESTADO } from "../constants/estadosCitas";
 import { fechaNoPasada } from "../utils/validaciones";
+import { obtenerFechaHoy } from "../utils/fechas";
+import { citasDelDia } from "../utils/historial";
 
 const HORARIOS = ["09:00", "10:00", "11:00", "12:00", "15:00", "16:00", "17:00"];
 
 export default function GestionCitasPage() {
     const { citas, actualizarEstadoCita, reagendarCita, eliminarCita } = useCitas();
     const [filtro, setFiltro] = useState("Todas");
+    const [fecha, setFecha] = useState(obtenerFechaHoy);
 
     // id de la cita que se está reagendando (null = ninguna)
     const [reagendando, setReagendando] = useState(null);
@@ -15,8 +18,9 @@ export default function GestionCitasPage() {
     const [nuevaHora, setNuevaHora] = useState("");
     const [errorReagendar, setErrorReagendar] = useState("");
 
+    const delDia = citasDelDia(citas, fecha);
     const citasVisibles =
-        filtro === "Todas" ? citas : citas.filter((c) => c.estado === filtro);
+        filtro === "Todas" ? delDia : delDia.filter((c) => c.estado === filtro);
 
     const abrirReagendar = (cita) => {
         setReagendando(cita.id);
@@ -47,15 +51,33 @@ export default function GestionCitasPage() {
     return (
         <div className="container py-4">
             <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-                <h1 className="h3 fw-bold text-success mb-0">Gestión de Citas</h1>
+                <h1 className="h3 fw-bold text-success mb-0">Citas del Día</h1>
 
-                <div className="d-flex align-items-center gap-2">
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                    <label htmlFor="fecha-citas" className="form-label mb-0">
+                        Fecha
+                    </label>
+                    <input
+                        id="fecha-citas"
+                        type="date"
+                        className="form-control w-auto"
+                        value={fecha}
+                        onChange={(e) => setFecha(e.target.value || obtenerFechaHoy())}
+                    />
+                    <button
+                        type="button"
+                        className="btn btn-outline-success"
+                        onClick={() => setFecha(obtenerFechaHoy())}
+                    >
+                        Hoy
+                    </button>
+
                     <label htmlFor="filtro-estado" className="form-label mb-0">
                         Mostrar
                     </label>
                     <select
                         id="filtro-estado"
-                        className="form-select"
+                        className="form-select w-auto"
                         value={filtro}
                         onChange={(e) => setFiltro(e.target.value)}
                     >
@@ -71,7 +93,7 @@ export default function GestionCitasPage() {
 
             {citasVisibles.length === 0 ? (
                 <div className="alert alert-info" role="alert">
-                    No hay citas para mostrar.
+                    No hay citas para el {fecha}.
                 </div>
             ) : (
                 <div className="table-responsive">
@@ -82,7 +104,7 @@ export default function GestionCitasPage() {
                                 <th>Dueño</th>
                                 <th>Mascota</th>
                                 <th>Servicio</th>
-                                <th>Fecha y hora</th>
+                                <th>Hora</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -94,9 +116,7 @@ export default function GestionCitasPage() {
                                     <td>{cita.nombreDuenio}</td>
                                     <td>{cita.nombreMascota}</td>
                                     <td>{cita.servicioNombre}</td>
-                                    <td>
-                                        {cita.fecha} · {cita.hora}
-                                    </td>
+                                    <td>{cita.hora}</td>
                                     <td>
                                         <span
                                             className={`badge me-2 ${CLASE_BADGE_ESTADO[cita.estado] ?? "bg-secondary"}`}

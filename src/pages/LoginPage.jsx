@@ -1,15 +1,27 @@
+
 import { useState } from 'react'
 import { ROLES } from '../constants/roles'
 import { obtenerSesion } from '../utils/sesion'
 import { avisarCambioSesion } from '../utils/sesionEventos'
 
-export default function LoginPage() {
-  const [credentials, setCredentials] = useState({
-    email: '',
-    password: '',
-    rol: ROLES.CLIENTE
-  })
+// Credenciales estáticas (EP2 solo frontend)
+const ADMIN = {
+  email: 'admin@gmail.cl',
+  password: '1234'
+}
 
+const RECEPCION = {
+  email: 'recepcion@gmail.cl',
+  password: '1234'
+}
+
+const CREDENCIALES_VACIAS = {
+  email: '',
+  password: ''
+}
+
+export default function LoginPage() {
+  const [credentials, setCredentials] = useState(CREDENCIALES_VACIAS)
   const [error, setError] = useState('')
   const [usuarioLogueado, setUsuarioLogueado] = useState(obtenerSesion)
 
@@ -30,25 +42,51 @@ export default function LoginPage() {
       return
     }
 
-    setError('')
+    const esAdmin =
+      credentials.email === ADMIN.email &&
+      credentials.password === ADMIN.password
 
-    const mockUser = {
-      email: credentials.email,
-      rol: credentials.rol,
-      nombre:
-        credentials.rol === ROLES.ADMIN
-          ? 'Administrador Sistema'
-          : credentials.rol === ROLES.RECEPCION
-            ? 'Recepcionista San Marcos'
-            : 'Dueño de Mascota'
+    const esRecepcion =
+      credentials.email === RECEPCION.email &&
+      credentials.password === RECEPCION.password
+
+
+    const usuarios = JSON.parse(
+      localStorage.getItem('usuariosRegistrados') || '[]'
+    )
+
+    const usuarioRegistrado = usuarios.find(
+      (usuario) =>
+        usuario.email === credentials.email.trim().toLowerCase() &&
+        usuario.password === credentials.password
+    )
+
+    if (!esAdmin && !esRecepcion && !usuarioRegistrado) {
+      setError('Correo electrónico o contraseña incorrectos')
+      return
     }
 
-    setUsuarioLogueado(mockUser)
 
-    localStorage.setItem(
-      'userSession',
-      JSON.stringify(mockUser)
-    )
+    setError('')
+
+
+    const mockUser = usuarioRegistrado
+      ? {
+        email: usuarioRegistrado.email,
+        rol: usuarioRegistrado.rol,
+        nombre: usuarioRegistrado.nombre
+      }
+      : {
+        email: credentials.email,
+        rol: esAdmin ? ROLES.ADMIN : ROLES.RECEPCION,
+        nombre: esAdmin
+          ? 'Administrador Sistema'
+          : 'Recepcionista'
+      }
+
+
+    setUsuarioLogueado(mockUser)
+    localStorage.setItem('userSession', JSON.stringify(mockUser))
 
     // Avisa al Navbar para que actualice sus enlaces
     avisarCambioSesion()
@@ -61,11 +99,8 @@ export default function LoginPage() {
     // Avisa al Navbar para que actualice sus enlaces
     avisarCambioSesion()
 
-    setCredentials({
-      email: '',
-      password: '',
-      rol: ROLES.CLIENTE
-    })
+    setCredentials(CREDENCIALES_VACIAS)
+    setError('')
   }
 
   return (
@@ -137,10 +172,11 @@ export default function LoginPage() {
                   value={credentials.email}
                   onChange={handleChange}
                   placeholder="usuario@sanmarcos.cl"
+                  required
                 />
               </div>
 
-              <div className="mb-3">
+              <div className="mb-4">
                 <label
                   htmlFor="login-password"
                   className="form-label fw-bold"
@@ -157,36 +193,8 @@ export default function LoginPage() {
                   value={credentials.password}
                   onChange={handleChange}
                   placeholder="••••••••"
+                  required
                 />
-              </div>
-
-              <div className="mb-4">
-                <label
-                  htmlFor="login-rol"
-                  className="form-label fw-bold"
-                >
-                  Seleccionar Rol (Simulación P2)
-                </label>
-
-                <select
-                  id="login-rol"
-                  name="rol"
-                  className="form-select"
-                  value={credentials.rol}
-                  onChange={handleChange}
-                >
-                  <option value={ROLES.CLIENTE}>
-                    Dueño de Mascota (Cliente)
-                  </option>
-
-                  <option value={ROLES.RECEPCION}>
-                    Recepcionista / Operador
-                  </option>
-
-                  <option value={ROLES.ADMIN}>
-                    Administrador
-                  </option>
-                </select>
               </div>
 
               <button
