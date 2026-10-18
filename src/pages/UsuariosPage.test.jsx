@@ -27,7 +27,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('AdminPage', () => {
+describe('UsuariosPage', () => {
   it('muestra los usuarios iniciales con su rol', () => {
     render(<UsuariosPage />)
 
