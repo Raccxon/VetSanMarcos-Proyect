@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -30,26 +32,60 @@ public class Mascota {
     @Max(value = 40, message = "La edad no puede superar 40")
     private Integer edad;
 
-    @NotBlank(message = "El nombre del dueño es obligatorio")
-    private String nombreDueno;
+    // Cada mascota pertenece a un usuario (su dueño)
+    @NotNull(message = "El dueño es obligatorio")
+    @ManyToOne
+    @JoinColumn(name = "dueno_id")
+    private Usuario dueno;
 
-    public Mascota() { }
+    public Mascota() {
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getEspecie() { return especie; }
-    public void setEspecie(String especie) { this.especie = especie; }
+    public String getNombre() {
+        return nombre;
+    }
 
-    public String getRaza() { return raza; }
-    public void setRaza(String raza) { this.raza = raza; }
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
-    public Integer getEdad() { return edad; }
-    public void setEdad(Integer edad) { this.edad = edad; }
+    public String getEspecie() {
+        return especie;
+    }
 
-    public String getNombreDueno() { return nombreDueno; }
-    public void setNombreDueno(String nombreDueno) { this.nombreDueno = nombreDueno; }
+    public void setEspecie(String especie) {
+        this.especie = especie;
+    }
+
+    public String getRaza() {
+        return raza;
+    }
+
+    public void setRaza(String raza) {
+        this.raza = raza;
+    }
+
+    public Integer getEdad() {
+        return edad;
+    }
+
+    public void setEdad(Integer edad) {
+        this.edad = edad;
+    }
+
+    public Usuario getDueno() {
+        return dueno;
+    }
+
+    public void setDueno(Usuario dueno) {
+        this.dueno = dueno;
+    }
 }
