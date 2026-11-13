@@ -1,5 +1,6 @@
 package cl.veterinaria.sanmarcos.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,12 @@ public class GlobalExceptionHandler {
         return construir(HttpStatus.BAD_REQUEST, "El cuerpo de la petición no es un JSON válido", null);
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> manejarIntegridad(DataIntegrityViolationException ex) {
+        return construir(HttpStatus.CONFLICT,
+                "No se puede completar la operación: hay datos relacionados (por ejemplo, citas) o duplicados", null);
+    }
+
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, Object>> manejarEstado(ResponseStatusException ex) {
         String mensaje = ex.getReason() != null ? ex.getReason() : "Error en la petición";
@@ -35,7 +42,7 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, Object>> construir(HttpStatusCode status, String mensaje,
-                                                          Map<String, String> errores) {
+            Map<String, String> errores) {
         Map<String, Object> cuerpo = new LinkedHashMap<>();
         cuerpo.put("status", status.value());
         cuerpo.put("message", mensaje);

@@ -20,8 +20,8 @@ public class CitaService {
     private final ServicioRepository servicioRepository;
 
     public CitaService(CitaRepository repository,
-                       MascotaRepository mascotaRepository,
-                       ServicioRepository servicioRepository) {
+            MascotaRepository mascotaRepository,
+            ServicioRepository servicioRepository) {
         this.repository = repository;
         this.mascotaRepository = mascotaRepository;
         this.servicioRepository = servicioRepository;
@@ -35,9 +35,13 @@ public class CitaService {
         return repository.findByMascotaDuenoId(duenoId);
     }
 
+    public List<Cita> listarPorEmailDueno(String email) {
+        return repository.findByMascotaDuenoEmail(email);
+    }
+
     public Cita buscar(Long id) {
-        return repository.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada"));
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada"));
     }
 
     public Cita crear(Cita cita) {
@@ -73,15 +77,15 @@ public class CitaService {
         if (mascota == null || mascota.getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes indicar el id de la mascota");
         }
-        return mascotaRepository.findById(mascota.getId()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.BAD_REQUEST, "La mascota indicada no existe"));
+        return mascotaRepository.findById(mascota.getId()).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La mascota indicada no existe"));
     }
 
     private Servicio buscarServicio(Servicio servicio) {
         if (servicio == null || servicio.getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes indicar el id del servicio");
         }
-        return servicioRepository.findById(servicio.getId()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.BAD_REQUEST, "El servicio indicado no existe"));
+        return servicioRepository.findById(servicio.getId()).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El servicio indicado no existe"));
     }
 }

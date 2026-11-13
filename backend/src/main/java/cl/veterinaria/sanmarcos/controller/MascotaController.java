@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -33,6 +34,12 @@ public class MascotaController {
         return ResponseEntity.ok(service.listar());
     }
 
+    // GET /api/mascotas/mias: las mascotas del usuario que inició sesión
+    @GetMapping("/mias")
+    public ResponseEntity<List<Mascota>> mias(Authentication authentication) {
+        return ResponseEntity.ok(service.listarPorEmailDueno(authentication.getName()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Mascota> buscar(@PathVariable Long id) {
         return ResponseEntity.ok(service.buscar(id));
@@ -46,7 +53,7 @@ public class MascotaController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Mascota> actualizar(@PathVariable Long id,
-                                              @Valid @RequestBody Mascota cambios) {
+            @Valid @RequestBody Mascota cambios) {
         return ResponseEntity.ok(service.actualizar(id, cambios));
     }
 

@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/citas")
@@ -34,6 +34,12 @@ public class CitaController {
             return ResponseEntity.ok(service.listarPorDueno(duenoId));
         }
         return ResponseEntity.ok(service.listar());
+    }
+
+    // GET /api/citas/mias: las citas del usuario que inició sesión
+    @GetMapping("/mias")
+    public ResponseEntity<List<Cita>> mias(Authentication authentication) {
+        return ResponseEntity.ok(service.listarPorEmailDueno(authentication.getName()));
     }
 
     @GetMapping("/{id}")

@@ -24,6 +24,9 @@ public class MascotaService {
     public List<Mascota> listar() {
         return repository.findAll();
     }
+    public List<Mascota> listarPorEmailDueno(String email) {
+        return repository.findByDuenoEmail(email);
+    }
 
     public Mascota buscar(Long id) {
         return repository.findById(id)
@@ -59,4 +62,5 @@ public class MascotaService {
         return usuarioRepository.findById(dueno.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El dueño indicado no existe"));
     }
+
 }

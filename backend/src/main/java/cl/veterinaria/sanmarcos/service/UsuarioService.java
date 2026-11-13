@@ -3,6 +3,7 @@ package cl.veterinaria.sanmarcos.service;
 import cl.veterinaria.sanmarcos.model.Usuario;
 import cl.veterinaria.sanmarcos.repository.UsuarioRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -12,9 +13,11 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository repository) {
+    public UsuarioService(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<Usuario> listar() {
@@ -32,6 +35,7 @@ public class UsuarioService {
         if (repository.existsByEmail(usuario.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo");
         }
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         return repository.save(usuario);
     }
 
@@ -43,7 +47,7 @@ public class UsuarioService {
         }
         actual.setNombre(cambios.getNombre());
         actual.setEmail(nuevoEmail);
-        actual.setPassword(cambios.getPassword());
+        actual.setPassword(passwordEncoder.encode(cambios.getPassword()));
         actual.setRol(cambios.getRol());
         return repository.save(actual);
     }

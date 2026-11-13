@@ -9,4 +9,6 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
 
     // Citas de las mascotas de un dueño (para "Mis Citas")
     List<Cita> findByMascotaDuenoId(Long duenoId);
+
+    List<Cita> findByMascotaDuenoEmail(String email);
 }
