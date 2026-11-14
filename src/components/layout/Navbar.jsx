@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ROLES } from '../../constants/roles'
-import { obtenerSesion } from '../../utils/sesion'
-import { EVENTO_SESION, avisarCambioSesion } from '../../utils/sesionEventos'
+import { obtenerSesion, cerrarSesion } from '../../utils/sesion'
+import { EVENTO_SESION } from '../../utils/sesionEventos'
 
 const PUBLICOS = [
     { to: '/', texto: 'Inicio' },
@@ -59,9 +59,8 @@ function Navbar() {
     }, [])
 
     const handleCerrarSesion = () => {
-        localStorage.removeItem('userSession')
+        cerrarSesion()
         setSesion(null)
-        avisarCambioSesion()
         navigate('/')
     }
 
