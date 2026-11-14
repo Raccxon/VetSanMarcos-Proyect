@@ -29,7 +29,7 @@ const serviciosMock = [
     categoria: 'Consultas',
     nombre: 'Consulta general',
     especie: 'Perro / Gato',
-    duracion: '30 min',
+    duracion: 30,
     precio: 15000,
     observaciones: 'Atención preventiva básica'
   },
@@ -38,7 +38,7 @@ const serviciosMock = [
     categoria: 'Vacunación',
     nombre: 'Vacuna antirrábica canina',
     especie: 'Perro',
-    duracion: '10 min',
+    duracion: 10,
     precio: 12000,
     observaciones: 'Obligatoria por ley'
   }
@@ -115,5 +115,19 @@ describe('ServiciosPage', () => {
         })
       ).not.toBeInTheDocument()
     })
+  })
+
+  it('si el backend no responde, muestra el error', async () => {
+    getServicios.mockRejectedValue(new Error('No se pudo conectar con el servidor'))
+
+    render(
+      <MemoryRouter>
+        <ServiciosPage />
+      </MemoryRouter>
+    )
+
+    expect(
+      await screen.findByRole('alert')
+    ).toHaveTextContent('No se pudo conectar con el servidor')
   })
 })

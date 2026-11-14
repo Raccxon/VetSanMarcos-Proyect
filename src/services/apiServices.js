@@ -1,9 +1,5 @@
-import { servicios } from '../data/servicios'
+import { solicitar } from './api'
 
-export const getServicios = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(servicios)
-    }, 300)
-  })
-}
+// Catálogo de servicios desde el backend (GET /api/servicios).
+// Es público: no necesita token, así que no se envía.
+export const getServicios = () => solicitar('/api/servicios', { conToken: false })

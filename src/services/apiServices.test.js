@@ -1,22 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getServicios } from './apiServices'
-import { servicios } from '../data/servicios'
+import { solicitar } from './api'
+
+vi.mock('./api', () => ({
+    solicitar: vi.fn()
+}))
 
 beforeEach(() => {
-    vi.useFakeTimers()
-})
-
-afterEach(() => {
-    vi.useRealTimers()
+    vi.clearAllMocks()
 })
 
 describe('getServicios', () => {
-    it('entrega los servicios después del retardo simulado', async () => {
-        const promesa = getServicios()
+    it('pide el catálogo a GET /api/servicios sin token (es público)', async () => {
+        const servicios = [{ id: 1, nombre: 'Consulta general', duracion: 30, precio: 15000 }]
+        solicitar.mockResolvedValue(servicios)
 
-        // la respuesta simula una API: tarda 300 ms
-        vi.advanceTimersByTime(300)
-
-        await expect(promesa).resolves.toEqual(servicios)
+        await expect(getServicios()).resolves.toEqual(servicios)
+        expect(solicitar).toHaveBeenCalledWith('/api/servicios', { conToken: false })
     })
 })

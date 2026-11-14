@@ -18,7 +18,7 @@ export default function ServiciosPage() {
   useEffect(() => {
     getServicios()
       .then((data) => setLista(data))
-      .catch(() => setError('No fue posible cargar los servicios.'))
+      .catch((err) => setError(err.message))
       .finally(() => setCargando(false))
   }, [])
 

@@ -8,7 +8,7 @@ const servicio = {
     categoria: 'Consultas',
     nombre: 'Consulta general',
     especie: 'Perro / Gato',
-    duracion: '30 min',
+    duracion: 30,
     precio: 15000,
     observaciones: 'Atención preventiva básica',
 }
@@ -53,6 +53,18 @@ describe('ServicioCard', () => {
                 name: 'Agendar'
             })
         ).toHaveAttribute('href', '/agendar')
+    })
+    
+    it('muestra la duración en minutos', () => {
+        render(
+            <MemoryRouter>
+                <ServicioCard servicio={servicio} />
+            </MemoryRouter>
+        )
+
+        expect(
+            screen.getByText(/Duración:/).parentElement
+        ).toHaveTextContent('30 min')
     })
 
 })

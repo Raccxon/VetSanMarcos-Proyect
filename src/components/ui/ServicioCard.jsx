@@ -17,7 +17,7 @@ function ServicioCard({ servicio }) {
         <p className="text-muted small mb-2">
           <strong>Especie:</strong> {servicio.especie}
           <br />
-          <strong>Duración:</strong> {servicio.duracion}
+          <strong>Duración:</strong> {servicio.duracion} min
         </p>
 
         {servicio.observaciones && (
