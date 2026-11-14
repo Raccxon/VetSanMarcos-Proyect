@@ -7,6 +7,7 @@ import {
 } from 'vitest'
 
 import {
+    act,
     render,
     screen
 } from '@testing-library/react'
@@ -17,8 +18,10 @@ import {
     Routes
 } from 'react-router-dom'
 
+
 import RutaProtegida from './RutaProtegida'
 import { EVENTO_SESION } from '../../utils/sesionEventos'
+import { cerrarSesion } from '../../utils/sesion'
 
 beforeEach(() => {
     localStorage.clear()
@@ -141,6 +144,36 @@ describe('RutaProtegida', () => {
         expect(screen.queryByText('Panel privado')).not.toBeInTheDocument()
         expect(localStorage.getItem('userSession')).toBeNull()
         expect(avisos).toHaveBeenCalled()
+    })
+
+    it('si la sesión se cierra con la página abierta, redirige al login', () => {
+        localStorage.setItem(
+            'userSession',
+            JSON.stringify({ email: 'admin@sanmarcos.cl', rol: 'admin', nombre: 'Administrador' })
+        )
+
+        render(
+            <MemoryRouter initialEntries={['/admin']}>
+                <Routes>
+                    <Route
+                        path="/admin"
+                        element={
+                            <RutaProtegida rolRequerido="admin">
+                                <p>Panel privado</p>
+                            </RutaProtegida>
+                        }
+                    />
+                    <Route path="/login" element={<p>Página de Login</p>} />
+                </Routes>
+            </MemoryRouter>
+        )
+        expect(screen.getByText('Panel privado')).toBeInTheDocument()
+
+        // por ejemplo, el backend respondió 401 y api.js cerró la sesión
+        act(() => cerrarSesion())
+
+        expect(screen.getByText('Página de Login')).toBeInTheDocument()
+        expect(screen.queryByText('Panel privado')).not.toBeInTheDocument()
     })
 
 })

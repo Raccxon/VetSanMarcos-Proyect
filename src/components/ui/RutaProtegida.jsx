@@ -1,11 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { obtenerSesion } from '../../utils/sesion'
-import { avisarCambioSesion } from '../../utils/sesionEventos'
+import { EVENTO_SESION, avisarCambioSesion } from '../../utils/sesionEventos'
 
 export default function RutaProtegida({ children, rolRequerido, rolesPermitidos }) {
   // obtenerSesion devuelve null si no hay sesión, si está dañada o si el token venció
   const session = obtenerSesion()
+
+  // Si la sesión se cierra mientras la página está abierta (por ejemplo, el backend
+  // respondió 401), este contador fuerza a revisar la sesión de nuevo y redirigir al login
+  const [, setRevision] = useState(0)
+
+  useEffect(() => {
+    const revisar = () => setRevision((n) => n + 1)
+    window.addEventListener(EVENTO_SESION, revisar)
+    return () => window.removeEventListener(EVENTO_SESION, revisar)
+  }, [])
 
   // Si la sesión no es válida, avisa al Navbar para que deje de mostrar enlaces de usuario
   useEffect(() => {
