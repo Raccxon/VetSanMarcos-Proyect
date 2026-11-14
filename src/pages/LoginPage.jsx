@@ -1,28 +1,16 @@
-
 import { useState } from 'react'
-import { ROLES } from '../constants/roles'
-import { obtenerSesion } from '../utils/sesion'
-import { avisarCambioSesion } from '../utils/sesionEventos'
-
-// Credenciales estáticas (EP2 solo frontend)
-const ADMIN = {
-  email: 'admin@gmail.cl',
-  password: '1234'
-}
-
-const RECEPCION = {
-  email: 'recepcion@gmail.cl',
-  password: '1234'
-}
+import { obtenerSesion, guardarSesion, cerrarSesion } from '../utils/sesion'
+import { login } from '../services/authService'
 
 const CREDENCIALES_VACIAS = {
   email: '',
-  password: ''
+  password: '' 
 }
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState(CREDENCIALES_VACIAS)
   const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(false)
   const [usuarioLogueado, setUsuarioLogueado] = useState(obtenerSesion)
 
   const handleChange = (e) => {
@@ -34,7 +22,7 @@ export default function LoginPage() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (!credentials.email || !credentials.password) {
@@ -42,63 +30,25 @@ export default function LoginPage() {
       return
     }
 
-    const esAdmin =
-      credentials.email === ADMIN.email &&
-      credentials.password === ADMIN.password
-
-    const esRecepcion =
-      credentials.email === RECEPCION.email &&
-      credentials.password === RECEPCION.password
-
-
-    const usuarios = JSON.parse(
-      localStorage.getItem('usuariosRegistrados') || '[]'
-    )
-
-    const usuarioRegistrado = usuarios.find(
-      (usuario) =>
-        usuario.email === credentials.email.trim().toLowerCase() &&
-        usuario.password === credentials.password
-    )
-
-    if (!esAdmin && !esRecepcion && !usuarioRegistrado) {
-      setError('Correo electrónico o contraseña incorrectos')
-      return
-    }
-
-
     setError('')
+    setCargando(true)
 
+    try {
+      // El backend valida el correo y la clave, y responde con el token
+      const respuesta = await login(credentials.email, credentials.password)
 
-    const mockUser = usuarioRegistrado
-      ? {
-        email: usuarioRegistrado.email,
-        rol: usuarioRegistrado.rol,
-        nombre: usuarioRegistrado.nombre
-      }
-      : {
-        email: credentials.email,
-        rol: esAdmin ? ROLES.ADMIN : ROLES.RECEPCION,
-        nombre: esAdmin
-          ? 'Administrador Sistema'
-          : 'Recepcionista'
-      }
-
-
-    setUsuarioLogueado(mockUser)
-    localStorage.setItem('userSession', JSON.stringify(mockUser))
-
-    // Avisa al Navbar para que actualice sus enlaces
-    avisarCambioSesion()
+      guardarSesion(respuesta)
+      setUsuarioLogueado(obtenerSesion())
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setCargando(false)
+    }
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('userSession')
+    cerrarSesion()
     setUsuarioLogueado(null)
-
-    // Avisa al Navbar para que actualice sus enlaces
-    avisarCambioSesion()
-
     setCredentials(CREDENCIALES_VACIAS)
     setError('')
   }
@@ -200,8 +150,9 @@ export default function LoginPage() {
               <button
                 type="submit"
                 className="btn btn-primary w-100"
+                disabled={cargando}
               >
-                Iniciar Sesión
+                {cargando ? 'Ingresando...' : 'Iniciar Sesión'}
               </button>
             </form>
           )}
