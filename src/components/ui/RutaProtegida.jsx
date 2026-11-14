@@ -1,15 +1,16 @@
+import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
+import { obtenerSesion } from '../../utils/sesion'
+import { avisarCambioSesion } from '../../utils/sesionEventos'
 
 export default function RutaProtegida({ children, rolRequerido, rolesPermitidos }) {
-  let session = null
+  // obtenerSesion devuelve null si no hay sesión, si está dañada o si el token venció
+  const session = obtenerSesion()
 
-  try {
-    session = JSON.parse(
-      localStorage.getItem('userSession')
-    )
-  } catch {
-    localStorage.removeItem('userSession')
-  }
+  // Si la sesión no es válida, avisa al Navbar para que deje de mostrar enlaces de usuario
+  useEffect(() => {
+    if (!session) avisarCambioSesion()
+  }, [session])
 
   if (!session) {
     return <Navigate to="/login" replace />

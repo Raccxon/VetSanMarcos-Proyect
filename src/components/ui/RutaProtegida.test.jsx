@@ -2,6 +2,7 @@ import {
     beforeEach,
     describe,
     expect,
+    vi,
     it
 } from 'vitest'
 
@@ -17,6 +18,7 @@ import {
 } from 'react-router-dom'
 
 import RutaProtegida from './RutaProtegida'
+import { EVENTO_SESION } from '../../utils/sesionEventos'
 
 beforeEach(() => {
     localStorage.clear()
@@ -106,6 +108,39 @@ describe('RutaProtegida', () => {
         )
         expect(screen.queryByText('Gestión compartida')).not.toBeInTheDocument()
         expect(screen.getByText('Acceso restringido')).toBeInTheDocument()
+    })
+
+    it('con el token vencido redirige al login, borra la sesión y avisa al Navbar', () => {
+        const vencido = `cabecera.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 10 }))}.firma`
+        localStorage.setItem(
+            'userSession',
+            JSON.stringify({ token: vencido, email: 'admin@sanmarcos.cl', rol: 'admin', nombre: 'Administrador' })
+        )
+        const avisos = vi.fn()
+        window.addEventListener(EVENTO_SESION, avisos)
+
+        render(
+            <MemoryRouter initialEntries={['/admin']}>
+                <Routes>
+                    <Route
+                        path="/admin"
+                        element={
+                            <RutaProtegida rolRequerido="admin">
+                                <p>Panel privado</p>
+                            </RutaProtegida>
+                        }
+                    />
+                    <Route path="/login" element={<p>Página de Login</p>} />
+                </Routes>
+            </MemoryRouter>
+        )
+
+        window.removeEventListener(EVENTO_SESION, avisos)
+
+        expect(screen.getByText('Página de Login')).toBeInTheDocument()
+        expect(screen.queryByText('Panel privado')).not.toBeInTheDocument()
+        expect(localStorage.getItem('userSession')).toBeNull()
+        expect(avisos).toHaveBeenCalled()
     })
 
 })
