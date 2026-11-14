@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ROLES } from '../constants/roles'
+import { registrar } from '../services/authService'
 
 export default function RegistroPage() {
     const navigate = useNavigate()
@@ -15,6 +16,7 @@ export default function RegistroPage() {
 
     const [error, setError] = useState('')
     const [mensaje, setMensaje] = useState('')
+    const [cargando, setCargando] = useState(false)
 
     const handleChange = (e) => {
         setFormulario({
@@ -26,7 +28,7 @@ export default function RegistroPage() {
         setMensaje('')
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
 
         const { nombre, email, password, confirmarPassword } = formulario
@@ -46,40 +48,21 @@ export default function RegistroPage() {
             return
         }
 
-        const usuarios = JSON.parse(
-            localStorage.getItem('usuariosRegistrados') || '[]'
-        )
+        setCargando(true)
 
-        const correo = email.trim().toLowerCase()
+        try {
+            // El backend crea el usuario siempre con rol cliente y guarda la clave cifrada.
+            // confirmarPassword es solo del formulario: no se envía.
+            await registrar({ nombre: nombre.trim(), email, password })
 
-        const correoExistente = usuarios.some(
-            (usuario) => usuario.email.toLowerCase() === correo
-        )
-
-        if (
-            correoExistente ||
-            correo === 'admin@gmail.cl' ||
-            correo === 'recepcion@gmail.cl'
-        ) {
-            setError('Este correo electrónico ya está registrado')
-            return
+            setMensaje('¡Registro exitoso! Ahora puedes iniciar sesión.')
+            setTimeout(() => navigate('/login'), 1500)
+        } catch (err) {
+            // Ej.: correo ya registrado (409) o datos inválidos (400)
+            setError(err.message)
+        } finally {
+            setCargando(false)
         }
-
-        const nuevoUsuario = {
-            nombre: nombre.trim(),
-            email: correo,
-            password,
-            rol: ROLES.CLIENTE
-        }
-
-        localStorage.setItem(
-            'usuariosRegistrados',
-            JSON.stringify([...usuarios, nuevoUsuario])
-        )
-
-        setMensaje('¡Registro exitoso! Ahora puedes iniciar sesión.')
-
-        setTimeout(() => navigate('/login'), 1500)
     }
 
     return (
@@ -172,7 +155,7 @@ export default function RegistroPage() {
                             />
                         </div>
 
-                        <button type="submit" className="btn btn-success w-100">
+                        <button type="submit" className="btn btn-success w-100" disabled={cargando}>
                             Registrarse
                         </button>
                     </form>
