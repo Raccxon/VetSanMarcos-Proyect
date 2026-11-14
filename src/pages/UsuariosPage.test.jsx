@@ -1,44 +1,78 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import UsuariosPage from './UsuariosPage'
 import { ROLES } from '../constants/roles'
+import {
+  listarUsuarios,
+  crearUsuario,
+  actualizarUsuario,
+  eliminarUsuario,
+} from '../services/usuarioService'
 
-const CLAVE = 'usuariosAdmin'
+// Se reemplaza el servicio: el test no necesita el backend encendido
+vi.mock('../services/usuarioService', () => ({
+  listarUsuarios: vi.fn(),
+  crearUsuario: vi.fn(),
+  actualizarUsuario: vi.fn(),
+  eliminarUsuario: vi.fn(),
+}))
 
-const completarFormulario = ({ nombre, email, rol }) => {
+// Lo que devolvería GET /api/usuarios (el backend nunca devuelve la contraseña)
+const USUARIOS_BACKEND = [
+  { id: 1, nombre: 'Administrador', email: 'admin@sanmarcos.cl', rol: ROLES.ADMIN },
+  { id: 2, nombre: 'Recepcionista', email: 'recepcion@sanmarcos.cl', rol: ROLES.RECEPCION },
+  { id: 3, nombre: 'Juan Pérez', email: 'jperez@gmail.com', rol: ROLES.CLIENTE },
+]
+
+const completarFormulario = ({ nombre, email, password, rol }) => {
   if (nombre !== undefined) {
     fireEvent.change(screen.getByLabelText('Nombre completo'), { target: { value: nombre } })
   }
   if (email !== undefined) {
     fireEvent.change(screen.getByLabelText('Correo electrónico'), { target: { value: email } })
   }
+  if (password !== undefined) {
+    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: password } })
+  }
   if (rol !== undefined) {
     fireEvent.change(screen.getByLabelText('Rol'), { target: { value: rol } })
   }
 }
 
-const guardados = () => JSON.parse(localStorage.getItem(CLAVE))
+// Renderiza y espera a que termine la carga inicial
+const renderCargada = async () => {
+  render(<UsuariosPage />)
+  await screen.findByText('Juan Pérez')
+}
 
 beforeEach(() => {
   localStorage.clear()
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
+  vi.clearAllMocks()
+  listarUsuarios.mockResolvedValue(USUARIOS_BACKEND)
 })
 
 describe('UsuariosPage', () => {
-  it('muestra los usuarios iniciales con su rol', () => {
+  it('muestra "Cargando" y luego los usuarios que entrega el backend', async () => {
     render(<UsuariosPage />)
 
+    expect(screen.getByText(/Cargando usuarios/i)).toBeInTheDocument()
+
+    const fila = (await screen.findByText('Recepcionista', { selector: 'td' })).closest('tr')
+    expect(within(fila).getByText('recepcion@sanmarcos.cl')).toBeInTheDocument()
     // 1 fila de encabezado + 3 usuarios
     expect(screen.getAllByRole('row')).toHaveLength(4)
-    const fila = screen.getByText('Carlos Gómez').closest('tr')
-    expect(within(fila).getByText('Recepcionista')).toBeInTheDocument()
+    expect(listarUsuarios).toHaveBeenCalledTimes(1)
   })
 
-  it('el select de rol usa los valores de ROLES', () => {
+  it('si el backend falla al cargar, muestra el error', async () => {
+    listarUsuarios.mockRejectedValue(new Error('No tienes permiso para realizar esta acción'))
     render(<UsuariosPage />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No tienes permiso')
+  })
+
+  it('el select de rol usa los valores de ROLES', async () => {
+    await renderCargada()
 
     const valores = within(screen.getByLabelText('Rol'))
       .getAllByRole('option')
@@ -47,109 +81,152 @@ describe('UsuariosPage', () => {
     expect(valores).toEqual(Object.values(ROLES))
   })
 
-  it('muestra errores al enviar el formulario vacío', () => {
-    render(<UsuariosPage />)
+  it('muestra errores al enviar el formulario vacío y no llama al backend', async () => {
+    await renderCargada()
 
     fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
 
     expect(screen.getByText('El nombre es obligatorio')).toBeInTheDocument()
     expect(screen.getByText('El correo electrónico es obligatorio')).toBeInTheDocument()
-    expect(screen.getAllByRole('row')).toHaveLength(4)
+    expect(screen.getByText('La contraseña es obligatoria')).toBeInTheDocument()
+    expect(crearUsuario).not.toHaveBeenCalled()
   })
 
-  it('rechaza un correo con formato inválido', () => {
-    render(<UsuariosPage />)
+  it('rechaza un correo con formato inválido', async () => {
+    await renderCargada()
 
-    completarFormulario({ nombre: 'Laura Soto', email: 'laura-sin-arroba' })
+    completarFormulario({ nombre: 'Laura Soto', email: 'laura-sin-arroba', password: '1234' })
     fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
 
     expect(screen.getByText('Ingrese un correo electrónico válido')).toBeInTheDocument()
-    expect(screen.queryByText('Laura Soto')).not.toBeInTheDocument()
+    expect(crearUsuario).not.toHaveBeenCalled()
   })
 
-  it('rechaza un correo que ya existe', () => {
-    render(<UsuariosPage />)
+  it('rechaza una contraseña de menos de 4 caracteres', async () => {
+    await renderCargada()
 
-    completarFormulario({ nombre: 'Otra Ana', email: 'ALOPEZ@sanmarcos.cl' })
+    completarFormulario({ nombre: 'Laura Soto', email: 'laura@sanmarcos.cl', password: 'abc' })
+    fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
+
+    expect(screen.getByText('La contraseña debe tener al menos 4 caracteres')).toBeInTheDocument()
+    expect(crearUsuario).not.toHaveBeenCalled()
+  })
+
+  it('rechaza un correo que ya existe en la lista', async () => {
+    await renderCargada()
+
+    completarFormulario({ nombre: 'Otro Admin', email: 'ADMIN@sanmarcos.cl', password: '1234' })
     fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
 
     expect(screen.getByText('Ya existe un usuario con ese correo')).toBeInTheDocument()
+    expect(crearUsuario).not.toHaveBeenCalled()
   })
 
-  it('crea un usuario con el rol elegido y lo guarda', () => {
-    render(<UsuariosPage />)
+  it('crea un usuario enviando los datos al backend y lo agrega a la tabla', async () => {
+    crearUsuario.mockResolvedValue({ id: 9, nombre: 'Laura Soto', email: 'laura@sanmarcos.cl', rol: ROLES.RECEPCION })
+    await renderCargada()
 
-    completarFormulario({ nombre: 'Laura Soto', email: 'laura@sanmarcos.cl', rol: ROLES.RECEPCION })
+    completarFormulario({ nombre: 'Laura Soto', email: 'laura@sanmarcos.cl', password: '1234', rol: ROLES.RECEPCION })
     fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
 
-    const fila = screen.getByText('Laura Soto').closest('tr')
+    const fila = (await screen.findByText('Laura Soto')).closest('tr')
     expect(within(fila).getByText('Recepcionista')).toBeInTheDocument()
+    expect(crearUsuario).toHaveBeenCalledWith({
+      nombre: 'Laura Soto',
+      email: 'laura@sanmarcos.cl',
+      password: '1234',
+      rol: ROLES.RECEPCION,
+    })
     expect(screen.getAllByRole('row')).toHaveLength(5)
-    expect(
-      guardados().some((u) => u.email === 'laura@sanmarcos.cl' && u.rol === ROLES.RECEPCION)
-    ).toBe(true)
+    // el formulario queda limpio
+    expect(screen.getByLabelText('Nombre completo')).toHaveValue('')
   })
 
-  it('edita un usuario existente', () => {
-    render(<UsuariosPage />)
+  it('si el backend rechaza la creación, muestra su mensaje y no agrega la fila', async () => {
+    crearUsuario.mockRejectedValue(new Error('Ya existe un usuario con ese correo'))
+    await renderCargada()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Editar Juan Pérez' }))
+    completarFormulario({ nombre: 'Laura Soto', email: 'laura@sanmarcos.cl', password: '1234' })
+    fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
 
-    // el formulario se llena con los datos del usuario
-    expect(screen.getByLabelText('Nombre completo')).toHaveValue('Juan Pérez')
-    expect(screen.getByLabelText('Rol')).toHaveValue(ROLES.CLIENTE)
-
-    completarFormulario({ nombre: 'Juan Pérez Soto', rol: ROLES.ADMIN })
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-
-    const fila = screen.getByText('Juan Pérez Soto').closest('tr')
-    expect(within(fila).getByText('Administrador')).toBeInTheDocument()
-    expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ya existe un usuario con ese correo')
+    expect(screen.queryByText('Laura Soto', { selector: 'td' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(4)
   })
 
-  it('cancelar la edición limpia el formulario', () => {
-    render(<UsuariosPage />)
+  it('edita un usuario existente y actualiza la fila con la respuesta del backend', async () => {
+    actualizarUsuario.mockResolvedValue({ id: 3, nombre: 'Juan Pérez Soto', email: 'jperez@gmail.com', rol: ROLES.ADMIN })
+    await renderCargada()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Editar Ana López' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Editar Juan Pérez' }))
+
+    // el formulario se llena con los datos del usuario; la contraseña queda vacía
+    expect(screen.getByLabelText('Nombre completo')).toHaveValue('Juan Pérez')
+    expect(screen.getByLabelText('Rol')).toHaveValue(ROLES.CLIENTE)
+    expect(screen.getByLabelText('Nueva contraseña')).toHaveValue('')
+
+    completarFormulario({ nombre: 'Juan Pérez Soto', password: 'nueva1', rol: ROLES.ADMIN })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    const fila = (await screen.findByText('Juan Pérez Soto')).closest('tr')
+    expect(within(fila).getByText('Administrador')).toBeInTheDocument()
+    expect(actualizarUsuario).toHaveBeenCalledWith(3, {
+      nombre: 'Juan Pérez Soto',
+      email: 'jperez@gmail.com',
+      password: 'nueva1',
+      rol: ROLES.ADMIN,
+    })
+    expect(screen.getAllByRole('row')).toHaveLength(4)
+  })
+
+  it('al editar también exige la contraseña, porque el backend la pide', async () => {
+    await renderCargada()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar Juan Pérez' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    expect(screen.getByText('La contraseña es obligatoria')).toBeInTheDocument()
+    expect(actualizarUsuario).not.toHaveBeenCalled()
+  })
+
+  it('cancelar la edición limpia el formulario', async () => {
+    await renderCargada()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar Juan Pérez' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar edición' }))
 
     expect(screen.getByLabelText('Nombre completo')).toHaveValue('')
     expect(screen.getByRole('button', { name: '+ Crear usuario' })).toBeInTheDocument()
   })
 
-  it('activa y desactiva un usuario', () => {
-    render(<UsuariosPage />)
+  it('elimina un usuario en el backend y lo quita de la tabla', async () => {
+    eliminarUsuario.mockResolvedValue(null)
+    await renderCargada()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Desactivar Ana López' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar Juan Pérez' }))
 
-    const fila = screen.getByText('Ana López').closest('tr')
-    expect(within(fila).getByText('Inactivo')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Activar Ana López' })).toBeInTheDocument()
+    await vi.waitFor(() => {
+      expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument()
+    })
+    expect(eliminarUsuario).toHaveBeenCalledWith(3)
+    expect(screen.getAllByRole('row')).toHaveLength(3)
   })
 
-  it('elimina un usuario y guarda el cambio', () => {
-    const spy = vi.spyOn(Storage.prototype, 'setItem')
-    render(<UsuariosPage />)
+  it('si el backend no deja eliminar, muestra el error y mantiene la fila', async () => {
+    eliminarUsuario.mockRejectedValue(new Error('No tienes permiso para realizar esta acción'))
+    await renderCargada()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Eliminar Carlos Gómez' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar Juan Pérez' }))
 
-    expect(screen.queryByText('Carlos Gómez')).not.toBeInTheDocument()
-    expect(spy).toHaveBeenCalledWith(CLAVE, expect.any(String))
-    expect(guardados()).toHaveLength(2)
+    expect(await screen.findByRole('alert')).toHaveTextContent('No tienes permiso')
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
   })
 
-  it('carga los usuarios guardados en localStorage', () => {
-    localStorage.setItem(
-      CLAVE,
-      JSON.stringify([
-        { id: 10, nombre: 'Marta Díaz', email: 'marta@sanmarcos.cl', rol: ROLES.CLIENTE, estado: 'Activo' },
-      ])
-    )
+  it('no permite eliminar la cuenta con la que se inició sesión', async () => {
+    localStorage.setItem('userSession', JSON.stringify({ email: 'admin@sanmarcos.cl', rol: 'admin', nombre: 'Administrador' }))
+    await renderCargada()
 
-    render(<UsuariosPage />)
-
-    expect(screen.getByText('Marta Díaz')).toBeInTheDocument()
-    expect(screen.queryByText('Ana López')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Eliminar Administrador' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Eliminar Juan Pérez' })).toBeEnabled()
   })
 })
