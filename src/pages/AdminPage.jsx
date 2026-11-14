@@ -1,6 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCitas } from '../context/CitasContext.jsx';
 import { obtenerFechaHoy } from '../utils/fechas';
+import {
+  getServicios,
+  crearServicio,
+  actualizarServicio,
+  eliminarServicio,
+} from '../services/apiServices';
+
+const SERVICIO_VACIO = {
+  nombre: '',
+  categoria: 'Consultas y Urgencias',
+  especie: 'Perro / Gato',
+  duracion: 30,
+  stock: 10,
+  precio: 20000
+};
 
 export default function AdminPage({ vista, onCambiarVista }) {
   // Si el Navbar controla la vista se usa la prop; si no, el estado local
@@ -14,22 +29,13 @@ export default function AdminPage({ vista, onCambiarVista }) {
   const [filtroFecha, setFiltroFecha] = useState('todas');
   const [fechaEspecifica, setFechaEspecifica] = useState('');
 
-  // Servicios parametrizables en estado local
-  const [serviciosStock, setServiciosStock] = useState([
-    { id: 1, nombre: 'Consulta General', categoria: 'Consultas y Urgencias', stock: 15, duracion: 30, precio: 20000 },
-    { id: 2, nombre: 'Vacunación Séxtuple', categoria: 'Vacunación', stock: 25, duracion: 15, precio: 18000 },
-    { id: 3, nombre: 'Cirugía Menor', categoria: 'Procedimientos', stock: 5, duracion: 60, precio: 75000 },
-    { id: 4, nombre: 'Examen de Sangre', categoria: 'Procedimientos', stock: 10, duracion: 45, precio: 25000 }
-  ]);
+  // Servicios reales: vienen del backend (GET /api/servicios)
+  const [serviciosStock, setServiciosStock] = useState([]);
+  const [cargandoServicios, setCargandoServicios] = useState(true);
+  const [errorServicios, setErrorServicios] = useState('');
 
   // Formulario para nuevo servicio
-  const [nuevoServicio, setNuevoServicio] = useState({
-    nombre: '',
-    categoria: 'Atención Médica',
-    duracion: 30,
-    stock: 10,
-    precio: 20000
-  });
+  const [nuevoServicio, setNuevoServicio] = useState(SERVICIO_VACIO);
 
   const [categorias] = useState([
     'Consultas y Urgencias',
@@ -37,6 +43,26 @@ export default function AdminPage({ vista, onCambiarVista }) {
     'Vacunación',
     'Peluquería y Estética'
   ]);
+
+  // Al abrir el panel se piden los servicios al backend
+  useEffect(() => {
+    let activo = true;
+
+    getServicios()
+      .then((datos) => {
+        if (activo) setServiciosStock(datos);
+      })
+      .catch((err) => {
+        if (activo) setErrorServicios(err.message);
+      })
+      .finally(() => {
+        if (activo) setCargandoServicios(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   // Obtener lista dinámica de clientes a partir de las citas agendadas
   const clientesDinamicos = Array.from(
@@ -54,40 +80,61 @@ export default function AdminPage({ vista, onCambiarVista }) {
     ).values()
   );
 
-  const handleStockChange = (id, nuevoStock) => {
-    setServiciosStock((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, stock: Math.max(0, Number(nuevoStock)) } : s))
-    );
-  };
+  // Se guarda al salir de la casilla (no en cada tecla) para no llamar al backend de más.
+  // El backend pide el servicio completo en el PUT, por eso se envía con el stock nuevo.
+  const handleStockChange = async (servicio, input) => {
+    const stock = Math.max(0, Number(input.value));
 
-  const handleEliminarServicio = (id, nombre) => {
-    if (window.confirm(`¿Está seguro que desea eliminar el servicio "${nombre}"?`)) {
-      setServiciosStock((prev) => prev.filter((s) => s.id !== id));
+    if (stock === servicio.stock) {
+      input.value = String(servicio.stock);
+      return;
+    }
+
+    setErrorServicios('');
+
+    try {
+      const actualizado = await actualizarServicio(servicio.id, { ...servicio, stock });
+      setServiciosStock((prev) => prev.map((s) => (s.id === servicio.id ? actualizado : s)));
+    } catch (err) {
+      input.value = String(servicio.stock);
+      setErrorServicios(err.message);
     }
   };
 
-  const handleCrearServicio = (e) => {
-    e.preventDefault();
-    if (!nuevoServicio.nombre.trim()) return;
+  const handleEliminarServicio = async (id, nombre) => {
+    if (!window.confirm(`¿Está seguro que desea eliminar el servicio "${nombre}"?`)) return;
 
-    setServiciosStock((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        ...nuevoServicio,
+    setErrorServicios('');
+
+    try {
+      await eliminarServicio(id);
+      setServiciosStock((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      // Ej.: el servicio tiene citas asociadas y el backend no deja borrarlo (409)
+      setErrorServicios(err.message);
+    }
+  };
+
+  const handleCrearServicio = async (e) => {
+    e.preventDefault();
+    if (!nuevoServicio.nombre.trim() || !nuevoServicio.especie.trim()) return;
+
+    setErrorServicios('');
+
+    try {
+      const creado = await crearServicio({
+        nombre: nuevoServicio.nombre.trim(),
+        categoria: nuevoServicio.categoria,
+        especie: nuevoServicio.especie.trim(),
         duracion: Number(nuevoServicio.duracion),
         stock: Number(nuevoServicio.stock),
         precio: Number(nuevoServicio.precio)
-      }
-    ]);
-
-    setNuevoServicio({
-      nombre: '',
-      categoria: 'Atención Médica',
-      duracion: 30,
-      stock: 10,
-      precio: 20000
-    });
+      });
+      setServiciosStock((prev) => [...prev, creado]);
+      setNuevoServicio(SERVICIO_VACIO);
+    } catch (err) {
+      setErrorServicios(err.message);
+    }
   };
 
   // Filtrado flexible de citas
@@ -190,44 +237,62 @@ export default function AdminPage({ vista, onCambiarVista }) {
           <div className="col-12 col-lg-8">
             <div className="card p-3">
               <h4>Catálogo de Servicios y Stock</h4>
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead>
-                    <tr>
-                      <th>Servicio</th>
-                      <th>Categoría</th>
-                      <th>Precio</th>
-                      <th>Duración</th>
-                      <th>Cupos</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {serviciosStock.map((s) => (
-                      <tr key={s.id}>
-                        <td><strong>{s.nombre}</strong></td>
-                        <td>{s.categoria}</td>
-                        <td>${s.precio.toLocaleString('es-CL')}</td>
-                        <td><span className="badge bg-secondary">{s.duracion} min</span></td>
-                        <td>
-                          <input
-                            type="number"
-                            className="form-control form-control-sm"
-                            style={{ width: '80px' }}
-                            value={s.stock}
-                            onChange={(e) => handleStockChange(s.id, e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <button className="btn btn-sm btn-danger" onClick={() => handleEliminarServicio(s.id, s.nombre)}>
-                            Eliminar
-                          </button>
-                        </td>
+
+              {errorServicios && (
+                <div className="alert alert-danger" role="alert">
+                  {errorServicios}
+                </div>
+              )}
+
+              {cargandoServicios ? (
+                <p className="text-muted">Cargando servicios...</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle">
+                    <thead>
+                      <tr>
+                        <th>Servicio</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Duración</th>
+                        <th>Cupos</th>
+                        <th>Acción</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {serviciosStock.map((s) => (
+                        <tr key={s.id}>
+                          <td><strong>{s.nombre}</strong></td>
+                          <td>{s.categoria}</td>
+                          <td>${s.precio.toLocaleString('es-CL')}</td>
+                          <td><span className="badge bg-secondary">{s.duracion} min</span></td>
+                          <td>
+                            <input
+                              key={`${s.id}-${s.stock}`}
+                              type="number"
+                              min="0"
+                              className="form-control form-control-sm"
+                              style={{ width: '80px' }}
+                              aria-label={`Cupos de ${s.nombre}`}
+                              defaultValue={s.stock}
+                              onBlur={(e) => handleStockChange(s, e.target)}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              aria-label={`Eliminar ${s.nombre}`}
+                              onClick={() => handleEliminarServicio(s.id, s.nombre)}
+                            >
+                              Eliminar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
 
@@ -236,8 +301,9 @@ export default function AdminPage({ vista, onCambiarVista }) {
               <h4>Agregar Nuevo Servicio</h4>
               <form onSubmit={handleCrearServicio}>
                 <div className="mb-2">
-                  <label className="form-label fw-bold">Nombre del Servicio</label>
+                  <label htmlFor="nuevo-nombre" className="form-label fw-bold">Nombre del Servicio</label>
                   <input
+                    id="nuevo-nombre"
                     type="text"
                     className="form-control"
                     value={nuevoServicio.nombre}
@@ -246,8 +312,9 @@ export default function AdminPage({ vista, onCambiarVista }) {
                   />
                 </div>
                 <div className="mb-2">
-                  <label className="form-label fw-bold">Categoría</label>
+                  <label htmlFor="nuevo-categoria" className="form-label fw-bold">Categoría</label>
                   <select
+                    id="nuevo-categoria"
                     className="form-select"
                     value={nuevoServicio.categoria}
                     onChange={(e) => setNuevoServicio({ ...nuevoServicio, categoria: e.target.value })}
@@ -258,27 +325,44 @@ export default function AdminPage({ vista, onCambiarVista }) {
                   </select>
                 </div>
                 <div className="mb-2">
-                  <label className="form-label fw-bold">Precio ($)</label>
+                  <label htmlFor="nuevo-especie" className="form-label fw-bold">Especie</label>
                   <input
+                    id="nuevo-especie"
+                    type="text"
+                    className="form-control"
+                    value={nuevoServicio.especie}
+                    onChange={(e) => setNuevoServicio({ ...nuevoServicio, especie: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="mb-2">
+                  <label htmlFor="nuevo-precio" className="form-label fw-bold">Precio ($)</label>
+                  <input
+                    id="nuevo-precio"
                     type="number"
+                    min="0"
                     className="form-control"
                     value={nuevoServicio.precio}
                     onChange={(e) => setNuevoServicio({ ...nuevoServicio, precio: e.target.value })}
                   />
                 </div>
                 <div className="mb-2">
-                  <label className="form-label fw-bold">Duración (Minutos)</label>
+                  <label htmlFor="nuevo-duracion" className="form-label fw-bold">Duración (Minutos)</label>
                   <input
+                    id="nuevo-duracion"
                     type="number"
+                    min="1"
                     className="form-control"
                     value={nuevoServicio.duracion}
                     onChange={(e) => setNuevoServicio({ ...nuevoServicio, duracion: e.target.value })}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Stock Inicial</label>
+                  <label htmlFor="nuevo-stock" className="form-label fw-bold">Stock Inicial</label>
                   <input
+                    id="nuevo-stock"
                     type="number"
+                    min="0"
                     className="form-control"
                     value={nuevoServicio.stock}
                     onChange={(e) => setNuevoServicio({ ...nuevoServicio, stock: e.target.value })}
