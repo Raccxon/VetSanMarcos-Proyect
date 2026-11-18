@@ -1,13 +1,46 @@
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { useCitas } from "../context/CitasContext"
 import { obtenerSesion } from "../utils/sesion"
-import { filtrarCitasPorEmail } from "../utils/citas"
 import { CLASE_BADGE_ESTADO } from "../constants/estadosCitas"
+import { listarMisCitas, actualizarCita, cuerpoCita } from "../services/citasService"
 
 export default function MisCitasPage() {
-    const { citas, actualizarEstadoCita } = useCitas()
     const sesion = obtenerSesion()
-    const misCitas = filtrarCitasPorEmail(citas, sesion?.email)
+    const [citas, setCitas] = useState([])
+    const [cargando, setCargando] = useState(true)
+    const [error, setError] = useState('')
+
+    // Al abrir la pantalla se piden al backend las citas de quien inició sesión
+    useEffect(() => {
+        let activo = true
+
+        listarMisCitas()
+            .then((datos) => {
+                if (activo) setCitas(datos)
+            })
+            .catch((err) => {
+                if (activo) setError(err.message)
+            })
+            .finally(() => {
+                if (activo) setCargando(false)
+            })
+
+        return () => {
+            activo = false
+        }
+    }, [])
+
+    // El backend pide la cita completa en el PUT: se reenvía igual, cambiando solo el estado
+    const handleCancelar = async (cita) => {
+        setError('')
+
+        try {
+            const actualizada = await actualizarCita(cita.id, cuerpoCita(cita, { estado: 'Cancelada' }))
+            setCitas((prev) => prev.map((c) => (c.id === cita.id ? actualizada : c)))
+        } catch (err) {
+            setError(err.message)
+        }
+    }
 
     return (
         <div className="container py-4">
@@ -18,18 +51,26 @@ export default function MisCitasPage() {
                 </Link>
             </div>
 
-            {misCitas.length === 0 ? (
-                <div className="alert alert-info" role="alert">
+            {error && (
+                <div className="alert alert-danger" role="alert">
+                    {error}
+                </div>
+            )}
+
+            {cargando ? (
+                <p className="text-muted">Cargando tus citas...</p>
+            ) : citas.length === 0 ? (
+                <div className="alert alert-info" role="status">
                     Aun no tienes citas solicitadas en tu correo {sesion?.email}.
                 </div>
             ) : (
                 <div className="row g-3">
-                    {misCitas.map((cita) => (
+                    {citas.map((cita) => (
                         <div className="col-12 col-md-6 col-xl-4" key={cita.id}>
                             <div className="card h-100 shadow-sm">
                                 <div className="card-body">
                                     <div className="d-flex justify-content-between align-items-start mb-2">
-                                        <h2 className="h5 mb-0">{cita.nombreMascota} </h2>
+                                        <h2 className="h5 mb-0">{cita.mascota.nombre} </h2>
                                         <span
                                             className={`badge ${CLASE_BADGE_ESTADO[cita.estado] ?? 'bg-secondary'}`}
                                         >
@@ -37,18 +78,18 @@ export default function MisCitasPage() {
                                         </span>
                                     </div>
                                     <p className="mb-1">
-                                        <strong>Servicio:</strong> {cita.servicioNombre}
+                                        <strong>Servicio:</strong> {cita.servicio.nombre}
                                     </p>
                                     <p className="mb-1">
                                         <strong>Fecha:</strong> {cita.fecha} · {cita.hora}
                                     </p>
                                     <p className="mb-0 text-muted small">N° {cita.id}</p>
-                                    {cita.estado !== 'Cancelada' && (
+                                    {cita.estado !== 'Cancelada' && cita.estado !== 'Atendida' && (
                                         <button
                                             type="button"
                                             className="btn btn-outline-danger btn-sm mt-3"
                                             aria-label={`Cancelar cita ${cita.id}`}
-                                            onClick={() => actualizarEstadoCita(cita.id, 'Cancelada')}
+                                            onClick={() => handleCancelar(cita)}
                                         >
                                             Cancelar cita
                                         </button>

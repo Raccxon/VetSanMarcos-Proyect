@@ -7,5 +7,6 @@ export const CLASE_BADGE_ESTADO = {
     Pendiente: 'bg-warning text-dark',
     Confirmada: 'bg-success',
     Reagendada: 'bg-info text-dark',
+    Atendida: 'bg-primary',
     Cancelada: 'bg-secondary'
 }
