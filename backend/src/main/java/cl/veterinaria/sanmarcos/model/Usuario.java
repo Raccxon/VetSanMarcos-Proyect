@@ -35,6 +35,14 @@ public class Usuario {
     @Pattern(regexp = "cliente|admin|recepcion", message = "El rol debe ser cliente, admin o recepcion")
     private String rol;
 
+    // Opcional para admin y recepción; el registro de clientes lo exige
+    @Column(unique = true)
+    @Pattern(regexp = "^\\d{7,8}-[\\dkK]$", message = "El RUT debe tener formato 12345678-9")
+    private String rut;
+
+    @Pattern(regexp = "^9\\d{8}$", message = "El teléfono debe ser un celular de 9 dígitos que empiece con 9")
+    private String telefono;
+
     public Usuario() {
     }
 
@@ -76,5 +84,21 @@ public class Usuario {
 
     public void setRol(String rol) {
         this.rol = rol;
+    }
+
+    public String getRut() {
+        return rut;
+    }
+
+    public void setRut(String rut) {
+        this.rut = rut;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
     }
 }

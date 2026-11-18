@@ -53,6 +53,8 @@ public class AuthController {
         nuevo.setNombre(datos.nombre());
         nuevo.setEmail(datos.email());
         nuevo.setPassword(datos.password());
+        nuevo.setRut(datos.rut());
+        nuevo.setTelefono(datos.telefono());
         nuevo.setRol("cliente");
 
         Usuario creado = usuarioService.crear(nuevo);
