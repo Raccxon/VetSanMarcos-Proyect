@@ -1,8 +1,10 @@
 package cl.veterinaria.sanmarcos.controller;
 
+import cl.veterinaria.sanmarcos.dto.Ocupacion;
 import cl.veterinaria.sanmarcos.model.Cita;
 import cl.veterinaria.sanmarcos.service.CitaService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.security.core.Authentication;
 
@@ -40,6 +43,13 @@ public class CitaController {
     @GetMapping("/mias")
     public ResponseEntity<List<Cita>> mias(Authentication authentication) {
         return ResponseEntity.ok(service.listarPorEmailDueno(authentication.getName()));
+    }
+
+    // GET /api/citas/ocupadas?fecha=2026-12-11: horas tomadas ese día (solo hora y duración)
+    @GetMapping("/ocupadas")
+    public ResponseEntity<List<Ocupacion>> ocupadas(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        return ResponseEntity.ok(service.ocupadas(fecha));
     }
 
     @GetMapping("/{id}")

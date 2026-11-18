@@ -1,5 +1,6 @@
 package cl.veterinaria.sanmarcos.service;
 
+import cl.veterinaria.sanmarcos.dto.Ocupacion;
 import cl.veterinaria.sanmarcos.model.Cita;
 import cl.veterinaria.sanmarcos.model.Mascota;
 import cl.veterinaria.sanmarcos.model.Servicio;
@@ -12,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -65,6 +67,10 @@ public class CitaService {
         if (cita.getEstado() == null || !Permisos.esPersonal(autenticacion)) {
             cita.setEstado("Pendiente");
         }
+
+        if (!"Cancelada".equals(cita.getEstado())) {
+            validarAgenda(cita.getFecha(), cita.getHora(), cita.getServicio(), null);
+        }
         return repository.save(cita);
     }
 
@@ -76,17 +82,54 @@ public class CitaService {
         Mascota nuevaMascota = buscarMascota(cambios.getMascota());
         verificarAcceso(nuevaMascota, autenticacion);
 
+        Servicio nuevoServicio = buscarServicio(cambios.getServicio());
+        String estadoActual = actual.getEstado();
+        String estadoFinal = cambios.getEstado() != null ? cambios.getEstado() : estadoActual;
+
+        if (cambios.getEstado() != null) {
+            verificarCambioDeEstado(estadoActual, cambios.getEstado(), autenticacion);
+        }
+
+        // Las reglas de horario se exigen solo cuando el horario cambia o cuando una cita cancelada
+        // vuelve a ocupar su hora. Así se puede cancelar o marcar como atendida una cita de ayer
+        boolean cambioElHorario = !cambios.getFecha().equals(actual.getFecha())
+                || !cambios.getHora().equals(actual.getHora())
+                || !nuevoServicio.getId().equals(actual.getServicio().getId());
+        boolean reactivada = "Cancelada".equals(estadoActual) && !"Cancelada".equals(estadoFinal);
+
+        if (!"Cancelada".equals(estadoFinal) && (cambioElHorario || reactivada)) {
+            validarAgenda(cambios.getFecha(), cambios.getHora(), nuevoServicio, id);
+        }
+
         actual.setMascota(nuevaMascota);
-        actual.setServicio(buscarServicio(cambios.getServicio()));
+        actual.setServicio(nuevoServicio);
         actual.setFecha(cambios.getFecha());
         actual.setHora(cambios.getHora());
         actual.setMotivo(cambios.getMotivo());
-
-        if (cambios.getEstado() != null) {
-            verificarCambioDeEstado(actual.getEstado(), cambios.getEstado(), autenticacion);
-            actual.setEstado(cambios.getEstado());
-        }
+        actual.setEstado(estadoFinal);
         return repository.save(actual);
+    }
+
+    // Horas ya tomadas de un día (sin datos de nadie): el frontend las usa para mostrar los bloques libres
+    public List<Ocupacion> ocupadas(LocalDate fecha) {
+        return repository.findByFechaAndEstadoNot(fecha, "Cancelada").stream()
+                .map(c -> new Ocupacion(c.getHora(), c.getServicio().getDuracion()))
+                .toList();
+    }
+
+    // Horario válido (fecha, hora y cierre) y sin cruzarse con otra cita no cancelada del mismo día
+    private void validarAgenda(LocalDate fecha, String hora, Servicio servicio, Long idIgnorado) {
+        int duracion = servicio.getDuracion();
+        ReglasAgenda.validarHorario(fecha, hora, duracion, LocalDate.now(ReglasAgenda.ZONA));
+
+        boolean ocupado = repository.findByFechaAndEstadoNot(fecha, "Cancelada").stream()
+                .filter(otra -> !otra.getId().equals(idIgnorado))
+                .anyMatch(otra -> ReglasAgenda.seSolapan(
+                        hora, duracion, otra.getHora(), otra.getServicio().getDuracion()));
+
+        if (ocupado) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ese horario ya está ocupado");
+        }
     }
 
     // Solo admin y recepción llegan aquí (lo exige SecurityConfig)

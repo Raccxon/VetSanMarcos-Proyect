@@ -38,7 +38,7 @@ public class Cita {
 
     private String motivo;
 
-    @Pattern(regexp = "Pendiente|Confirmada|Reagendada|Cancelada", message = "El estado debe ser Pendiente, Confirmada, Reagendada o Cancelada")
+    @Pattern(regexp = "Pendiente|Confirmada|Reagendada|Atendida|Cancelada", message = "El estado debe ser Pendiente, Confirmada, Reagendada, Atendida o Cancelada")
     private String estado;
 
     public Cita() {
