@@ -7,6 +7,11 @@ export const formatearRut = (valor) => {
     return `${cuerpo}-${dv}`;
 };
 
+// Deja el celular como lo espera el backend: 9 dígitos, sin espacios, guiones ni +56
+export const normalizarTelefono = (telefono) => {
+    return telefono.replace(/[\s-]/g, '').replace(/^\+?56/, '');
+};
+
 // Formatea número chileno (solo 8 dígitos numéricos)
 export const formatearTelefonoChileno = (valor) => {
     return valor.replace(/[^0-9]/g, '').slice(0, 8);

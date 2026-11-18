@@ -1,8 +1,7 @@
-
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ROLES } from '../constants/roles'
 import { registrar } from '../services/authService'
+import { formatearRut, normalizarTelefono, rutValido, telefonoValido } from '../utils/validaciones'
 
 export default function RegistroPage() {
     const navigate = useNavigate()
@@ -10,6 +9,8 @@ export default function RegistroPage() {
     const [formulario, setFormulario] = useState({
         nombre: '',
         email: '',
+        rut: '',
+        telefono: '',
         password: '',
         confirmarPassword: ''
     })
@@ -19,9 +20,12 @@ export default function RegistroPage() {
     const [cargando, setCargando] = useState(false)
 
     const handleChange = (e) => {
+        const { name, value } = e.target
+
         setFormulario({
             ...formulario,
-            [e.target.name]: e.target.value
+            // El RUT se va formateando solo mientras se escribe (12345678-K)
+            [name]: name === 'rut' ? formatearRut(value) : value
         })
 
         setError('')
@@ -31,10 +35,20 @@ export default function RegistroPage() {
     const handleSubmit = async (e) => {
         e.preventDefault()
 
-        const { nombre, email, password, confirmarPassword } = formulario
+        const { nombre, email, rut, telefono, password, confirmarPassword } = formulario
 
-        if (!nombre.trim() || !email.trim() || !password || !confirmarPassword) {
+        if (!nombre.trim() || !email.trim() || !rut.trim() || !telefono.trim() || !password || !confirmarPassword) {
             setError('Complete todos los campos')
+            return
+        }
+
+        if (!rutValido(rut)) {
+            setError('El RUT debe tener formato 12345678-9')
+            return
+        }
+
+        if (!telefonoValido(telefono)) {
+            setError('Ingrese un celular chileno válido (ej: 912345678)')
             return
         }
 
@@ -53,12 +67,18 @@ export default function RegistroPage() {
         try {
             // El backend crea el usuario siempre con rol cliente y guarda la clave cifrada.
             // confirmarPassword es solo del formulario: no se envía.
-            await registrar({ nombre: nombre.trim(), email, password })
+            await registrar({
+                nombre: nombre.trim(),
+                email,
+                rut: formatearRut(rut),
+                telefono: normalizarTelefono(telefono),
+                password
+            })
 
             setMensaje('¡Registro exitoso! Ahora puedes iniciar sesión.')
             setTimeout(() => navigate('/login'), 1500)
         } catch (err) {
-            // Ej.: correo ya registrado (409) o datos inválidos (400)
+            // Ej.: correo o RUT ya registrado (409) o datos inválidos (400)
             setError(err.message)
         } finally {
             setCargando(false)
@@ -115,6 +135,38 @@ export default function RegistroPage() {
                                 value={formulario.email}
                                 onChange={handleChange}
                                 autoComplete="email"
+                                required
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label htmlFor="rut" className="form-label fw-bold">
+                                RUT
+                            </label>
+                            <input
+                                id="rut"
+                                name="rut"
+                                className="form-control"
+                                placeholder="12345678-9"
+                                value={formulario.rut}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label htmlFor="telefono" className="form-label fw-bold">
+                                Teléfono
+                            </label>
+                            <input
+                                id="telefono"
+                                name="telefono"
+                                type="tel"
+                                className="form-control"
+                                placeholder="912345678"
+                                value={formulario.telefono}
+                                onChange={handleChange}
+                                autoComplete="tel"
                                 required
                             />
                         </div>

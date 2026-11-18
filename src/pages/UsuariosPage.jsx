@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ROLES } from '../constants/roles'
 import { obtenerSesion } from '../utils/sesion'
+import { formatearRut, normalizarTelefono, rutValido, telefonoValido } from '../utils/validaciones'
 import {
   listarUsuarios,
   crearUsuario,
@@ -15,7 +16,7 @@ const ETIQUETAS_ROL = {
   [ROLES.CLIENTE]: 'Cliente',
 }
 
-const FORM_VACIO = { nombre: '', email: '', password: '', rol: ROLES.CLIENTE }
+const FORM_VACIO = { nombre: '', email: '', rut: '', telefono: '', password: '', rol: ROLES.CLIENTE }
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([])
@@ -51,7 +52,8 @@ export default function UsuariosPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    // El RUT se va formateando solo mientras se escribe (12345678-K)
+    setForm((prev) => ({ ...prev, [name]: name === 'rut' ? formatearRut(value) : value }))
     if (errores[name]) {
       setErrores((prev) => ({ ...prev, [name]: '' }))
     }
@@ -71,6 +73,15 @@ export default function UsuariosPage() {
       nuevosErrores.email = 'Ingrese un correo electrónico válido'
     } else if (usuarios.some((u) => u.id !== editandoId && u.email.toLowerCase() === email)) {
       nuevosErrores.email = 'Ya existe un usuario con ese correo'
+    }
+
+    // RUT y teléfono son opcionales (el personal no los necesita), pero si se escriben deben ser válidos
+    if (form.rut.trim() && !rutValido(form.rut)) {
+      nuevosErrores.rut = 'El RUT debe tener formato 12345678-9'
+    }
+
+    if (form.telefono.trim() && !telefonoValido(form.telefono)) {
+      nuevosErrores.telefono = 'Ingrese un celular chileno válido (ej: 912345678)'
     }
 
     // El backend exige contraseña tanto al crear como al editar
@@ -101,6 +112,10 @@ export default function UsuariosPage() {
       rol: form.rol,
     }
 
+    // Solo se envían si se escribieron: el backend rechaza un texto vacío como formato inválido
+    if (form.rut.trim()) datos.rut = formatearRut(form.rut)
+    if (form.telefono.trim()) datos.telefono = normalizarTelefono(form.telefono)
+
     setGuardando(true)
     setErrorGeneral('')
 
@@ -114,7 +129,7 @@ export default function UsuariosPage() {
       }
       limpiarFormulario()
     } catch (err) {
-      // Ej.: correo repetido (409) o datos inválidos (400): se muestra el mensaje del backend
+      // Ej.: correo o RUT repetido (409) o datos inválidos (400): se muestra el mensaje del backend
       setErrorGeneral(err.message)
     } finally {
       setGuardando(false)
@@ -123,7 +138,14 @@ export default function UsuariosPage() {
 
   const handleEditar = (usuario) => {
     // La contraseña no se devuelve nunca desde el backend, por eso queda vacía
-    setForm({ nombre: usuario.nombre, email: usuario.email, password: '', rol: usuario.rol })
+    setForm({
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rut: usuario.rut ?? '',
+      telefono: usuario.telefono ?? '',
+      password: '',
+      rol: usuario.rol,
+    })
     setEditandoId(usuario.id)
     setErrores({})
   }
@@ -219,6 +241,34 @@ export default function UsuariosPage() {
                 </select>
               </div>
 
+              <div className="col-12 col-md-3">
+                <label htmlFor="admin-rut" className="form-label">RUT</label>
+                <input
+                  id="admin-rut"
+                  name="rut"
+                  type="text"
+                  placeholder="12345678-9"
+                  className={`form-control ${errores.rut ? 'is-invalid' : ''}`}
+                  value={form.rut}
+                  onChange={handleChange}
+                />
+                {errores.rut && <div className="invalid-feedback">{errores.rut}</div>}
+              </div>
+
+              <div className="col-12 col-md-3">
+                <label htmlFor="admin-telefono" className="form-label">Teléfono</label>
+                <input
+                  id="admin-telefono"
+                  name="telefono"
+                  type="tel"
+                  placeholder="912345678"
+                  className={`form-control ${errores.telefono ? 'is-invalid' : ''}`}
+                  value={form.telefono}
+                  onChange={handleChange}
+                />
+                {errores.telefono && <div className="invalid-feedback">{errores.telefono}</div>}
+              </div>
+
               <div className="col-12 d-flex flex-wrap gap-2">
                 <button type="submit" className="btn btn-success" disabled={guardando}>
                   {editandoId !== null ? 'Guardar cambios' : '+ Crear usuario'}
@@ -247,6 +297,8 @@ export default function UsuariosPage() {
                 <th>ID</th>
                 <th>Nombre</th>
                 <th>Email</th>
+                <th>RUT</th>
+                <th>Teléfono</th>
                 <th>Rol</th>
                 <th>Acciones</th>
               </tr>
@@ -260,6 +312,8 @@ export default function UsuariosPage() {
                     <td>{u.id}</td>
                     <td>{u.nombre}</td>
                     <td>{u.email}</td>
+                    <td>{u.rut ?? '—'}</td>
+                    <td>{u.telefono ?? '—'}</td>
                     <td><strong>{ETIQUETAS_ROL[u.rol] ?? u.rol}</strong></td>
                     <td>
                       <div className="d-flex flex-wrap gap-1">

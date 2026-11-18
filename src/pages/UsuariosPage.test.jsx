@@ -24,7 +24,7 @@ const USUARIOS_BACKEND = [
   { id: 3, nombre: 'Juan Pérez', email: 'jperez@gmail.com', rol: ROLES.CLIENTE },
 ]
 
-const completarFormulario = ({ nombre, email, password, rol }) => {
+const completarFormulario = ({ nombre, email, password, rol, rut, telefono }) => {
   if (nombre !== undefined) {
     fireEvent.change(screen.getByLabelText('Nombre completo'), { target: { value: nombre } })
   }
@@ -36,6 +36,12 @@ const completarFormulario = ({ nombre, email, password, rol }) => {
   }
   if (rol !== undefined) {
     fireEvent.change(screen.getByLabelText('Rol'), { target: { value: rol } })
+  }
+  if (rut !== undefined) {
+    fireEvent.change(screen.getByLabelText('RUT'), { target: { value: rut } })
+  }
+  if (telefono !== undefined) {
+    fireEvent.change(screen.getByLabelText('Teléfono'), { target: { value: telefono } })
   }
 }
 
@@ -228,5 +234,68 @@ describe('UsuariosPage', () => {
 
     expect(screen.getByRole('button', { name: 'Eliminar Administrador' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Eliminar Juan Pérez' })).toBeEnabled()
+  })
+  
+  it('muestra el RUT y el teléfono de cada usuario, o un guion si no tiene', async () => {
+    listarUsuarios.mockResolvedValue([
+      ...USUARIOS_BACKEND.slice(0, 2),
+      { ...USUARIOS_BACKEND[2], rut: '11111111-1', telefono: '912345678' },
+    ])
+    await renderCargada()
+
+    const cliente = screen.getByText('Juan Pérez', { selector: 'td' }).closest('tr')
+    expect(within(cliente).getByText('11111111-1')).toBeInTheDocument()
+    expect(within(cliente).getByText('912345678')).toBeInTheDocument()
+
+    const admin = screen.getByText('Administrador', { selector: 'td' }).closest('tr')
+    expect(within(admin).getAllByText('—')).toHaveLength(2)
+  })
+
+  it('rechaza un RUT o un teléfono mal escritos, pero acepta dejarlos vacíos', async () => {
+    await renderCargada()
+
+    completarFormulario({ nombre: 'Laura Soto', email: 'laura@sanmarcos.cl', password: '1234', rut: '123', telefono: '12345' })
+    fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
+
+    expect(screen.getByText('El RUT debe tener formato 12345678-9')).toBeInTheDocument()
+    expect(screen.getByText('Ingrese un celular chileno válido (ej: 912345678)')).toBeInTheDocument()
+    expect(crearUsuario).not.toHaveBeenCalled()
+  })
+
+  it('envía el RUT y el teléfono normalizados cuando se escriben', async () => {
+    crearUsuario.mockResolvedValue({ id: 9, nombre: 'Laura Soto', email: 'laura@sanmarcos.cl', rol: ROLES.CLIENTE })
+    await renderCargada()
+
+    completarFormulario({
+      nombre: 'Laura Soto',
+      email: 'laura@sanmarcos.cl',
+      password: '1234',
+      rut: '11.111.111-k',
+      telefono: '+56 9 1234 5678',
+    })
+    fireEvent.click(screen.getByRole('button', { name: '+ Crear usuario' }))
+
+    await screen.findByText('Laura Soto')
+    expect(crearUsuario).toHaveBeenCalledWith({
+      nombre: 'Laura Soto',
+      email: 'laura@sanmarcos.cl',
+      password: '1234',
+      rol: ROLES.CLIENTE,
+      rut: '11111111-K',
+      telefono: '912345678',
+    })
+  })
+
+  it('al editar carga el RUT y el teléfono del usuario en el formulario', async () => {
+    listarUsuarios.mockResolvedValue([
+      ...USUARIOS_BACKEND.slice(0, 2),
+      { ...USUARIOS_BACKEND[2], rut: '11111111-1', telefono: '912345678' },
+    ])
+    await renderCargada()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar Juan Pérez' }))
+
+    expect(screen.getByLabelText('RUT')).toHaveValue('11111111-1')
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('912345678')
   })
 })

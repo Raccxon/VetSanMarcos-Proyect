@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fechaNoPasada, rutValido, telefonoValido } from './validaciones'
+import { fechaNoPasada, normalizarTelefono, rutValido, telefonoValido } from './validaciones'
 
 describe('rutValido', () => {
     it('acepta RUT con o sin puntos y con K', () => {
@@ -40,5 +40,15 @@ describe('fechaNoPasada', () => {
     it('rechaza fechas pasadas o vacías', () => {
         expect(fechaNoPasada('2026-10-09', hoy)).toBe(false)
         expect(fechaNoPasada('', hoy)).toBe(false)
+    })
+})
+
+
+describe('normalizarTelefono', () => {
+    it('deja solo los 9 dígitos del celular', () => {
+        expect(normalizarTelefono('912345678')).toBe('912345678')
+        expect(normalizarTelefono('+56912345678')).toBe('912345678')
+        expect(normalizarTelefono('+56 9 1234 5678')).toBe('912345678')
+        expect(normalizarTelefono('9 1234-5678')).toBe('912345678')
     })
 })
