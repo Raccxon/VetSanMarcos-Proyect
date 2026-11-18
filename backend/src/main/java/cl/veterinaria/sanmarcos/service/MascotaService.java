@@ -4,7 +4,9 @@ import cl.veterinaria.sanmarcos.model.Mascota;
 import cl.veterinaria.sanmarcos.model.Usuario;
 import cl.veterinaria.sanmarcos.repository.MascotaRepository;
 import cl.veterinaria.sanmarcos.repository.UsuarioRepository;
+import cl.veterinaria.sanmarcos.security.Permisos;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,34 +26,68 @@ public class MascotaService {
     public List<Mascota> listar() {
         return repository.findAll();
     }
+
     public List<Mascota> listarPorEmailDueno(String email) {
         return repository.findByDuenoEmail(email);
     }
 
-    public Mascota buscar(Long id) {
+    // Busca una mascota sin revisar permisos: solo para uso interno de esta clase
+    private Mascota buscar(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota no encontrada"));
     }
 
-    public Mascota crear(Mascota mascota) {
+    // Un cliente solo puede ver sus mascotas; admin y recepción pueden ver cualquiera
+    public Mascota buscar(Long id, Authentication autenticacion) {
+        Mascota mascota = buscar(id);
+        verificarAcceso(mascota, autenticacion);
+        return mascota;
+    }
+
+    public Mascota crear(Mascota mascota, Authentication autenticacion) {
         mascota.setId(null);
-        mascota.setDueno(buscarDueno(mascota.getDueno()));
+
+        if (Permisos.esPersonal(autenticacion)) {
+            mascota.setDueno(buscarDueno(mascota.getDueno()));
+        } else {
+            // Un cliente solo registra mascotas a su nombre, aunque el JSON indique otro dueño
+            mascota.setDueno(usuarioRepository.findByEmail(autenticacion.getName())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado")));
+        }
+
         return repository.save(mascota);
     }
 
-    public Mascota actualizar(Long id, Mascota cambios) {
+    public Mascota actualizar(Long id, Mascota cambios, Authentication autenticacion) {
         Mascota actual = buscar(id);
+        verificarAcceso(actual, autenticacion);
+
         actual.setNombre(cambios.getNombre());
         actual.setEspecie(cambios.getEspecie());
         actual.setRaza(cambios.getRaza());
         actual.setEdad(cambios.getEdad());
-        actual.setDueno(buscarDueno(cambios.getDueno()));
+
+        // Solo el personal puede traspasar una mascota a otro dueño
+        if (Permisos.esPersonal(autenticacion)) {
+            actual.setDueno(buscarDueno(cambios.getDueno()));
+        }
+
         return repository.save(actual);
     }
 
+    // Solo admin y recepción llegan aquí (lo exige SecurityConfig)
     public void eliminar(Long id) {
         Mascota actual = buscar(id);
         repository.delete(actual);
+    }
+
+    // 403 si quien consulta no es el dueño ni personal de la veterinaria
+    private void verificarAcceso(Mascota mascota, Authentication autenticacion) {
+        String emailDueno = mascota.getDueno() != null ? mascota.getDueno().getEmail() : null;
+
+        if (!Permisos.puedeAcceder(autenticacion, emailDueno)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para acceder a esta mascota");
+        }
     }
 
     // Revisa que el dueño venga con id y que exista en la base de datos

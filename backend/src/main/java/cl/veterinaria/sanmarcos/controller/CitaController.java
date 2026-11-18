@@ -43,18 +43,19 @@ public class CitaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Cita> buscar(@PathVariable Long id) {
-        return ResponseEntity.ok(service.buscar(id));
+    public ResponseEntity<Cita> buscar(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(service.buscar(id, authentication));
     }
 
     @PostMapping
-    public ResponseEntity<Cita> crear(@Valid @RequestBody Cita cita) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(cita));
+    public ResponseEntity<Cita> crear(@Valid @RequestBody Cita cita, Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(cita, authentication));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Cita> actualizar(@PathVariable Long id, @Valid @RequestBody Cita cambios) {
-        return ResponseEntity.ok(service.actualizar(id, cambios));
+    public ResponseEntity<Cita> actualizar(@PathVariable Long id, @Valid @RequestBody Cita cambios,
+            Authentication authentication) {
+        return ResponseEntity.ok(service.actualizar(id, cambios, authentication));
     }
 
     @DeleteMapping("/{id}")

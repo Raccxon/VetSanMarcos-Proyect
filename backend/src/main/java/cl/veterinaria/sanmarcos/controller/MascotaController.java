@@ -41,20 +41,20 @@ public class MascotaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Mascota> buscar(@PathVariable Long id) {
-        return ResponseEntity.ok(service.buscar(id));
+    public ResponseEntity<Mascota> buscar(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(service.buscar(id, authentication));
     }
 
     @PostMapping
-    public ResponseEntity<Mascota> crear(@Valid @RequestBody Mascota mascota) {
-        Mascota creada = service.crear(mascota);
+    public ResponseEntity<Mascota> crear(@Valid @RequestBody Mascota mascota, Authentication authentication) {
+        Mascota creada = service.crear(mascota, authentication);
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Mascota> actualizar(@PathVariable Long id,
-            @Valid @RequestBody Mascota cambios) {
-        return ResponseEntity.ok(service.actualizar(id, cambios));
+            @Valid @RequestBody Mascota cambios, Authentication authentication) {
+        return ResponseEntity.ok(service.actualizar(id, cambios, authentication));
     }
 
     @DeleteMapping("/{id}")
