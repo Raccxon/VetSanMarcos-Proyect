@@ -40,6 +40,7 @@ export default function AdminPage({ vista, onCambiarVista }) {
   const [categorias] = useState([
     'Consultas y Urgencias',
     'Procedimientos',
+    'Cirugía',
     'Vacunación',
     'Peluquería y Estética'
   ]);

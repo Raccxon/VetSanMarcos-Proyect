@@ -25,3 +25,5 @@ dist-ssr
 coverage
 backend/target/
 backend/.vscode/
+.env
+backend/.env

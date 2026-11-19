@@ -1,58 +1,122 @@
-# Veterinaria San Marcos - Frontend (EP2)
+# Veterinaria San Marcos
 
-Aplicación web para la gestión de servicios, citas, fichas clínicas e historial de la Veterinaria San Marcos (Rancagua).
-DSY1104 Desarrollo Full Stack II - Evaluación Parcial 2, Sección 005 (caso Forma A).
+Aplicación web fullstack para gestionar servicios, mascotas y citas de la Veterinaria San Marcos (Rancagua).
+DSY1104 Desarrollo Fullstack II, Evaluación Parcial 3, Sección 005.
 
 **Integrantes:** Alan Ojeda y Nayeli Leiva
 
-Es una aplicación solo front-end con datos simulados: todo se guarda en el navegador (`localStorage`). El backend se incorpora en el Parcial 3.
-
 ## Tecnologías
-React 19, Vite 8, React Router 7, Bootstrap 5, React Leaflet, Vitest + React Testing Library.
 
-## Cómo ejecutarlo
-```bash
-npm install
-npm run dev             # abre http://localhost:5173
-npm test                # ejecuta las pruebas unitarias
-npm run test:coverage   # genera el reporte de cobertura
-npm run build           # compila para producción
-npm run lint            # revisa el código
-```
-
-## Usuarios de prueba (sesión simulada)
-El login valida correo y contraseña. Los usuarios del personal son fijos y los clientes se crean desde "Registrarse".
-
-| Rol | Correo | Contraseña | Qué puede hacer |
-|---|---|---|---|
-| administrador | admin@gmail.cl | 1234 | Panel de administración (stock y servicios), Usuarios, Gestión de Citas, Gestión de Fichas e Historial |
-| recepción | recepcion@gmail.cl | 1234 | Gestión de Citas (cambiar estado, reagendar, eliminar), Gestión de Fichas e Historial |
-| cliente | el que se registre en /registro | la que elija (mínimo 4 caracteres) | Agendar citas, ver y cancelar sus citas en "Mis Citas" y ver su propio historial |
-
-Reglas del registro: la contraseña debe repetirse igual, el correo no puede repetirse y no se pueden registrar los correos del administrador ni de recepción.
-
-## Rutas y permisos
-| Ruta | Quién entra |
-|---|---|
-| `/`, `/servicios`, `/agendar`, `/login`, `/registro` | Todos |
-| `/historial` | Cualquier usuario con sesión |
-| `/mis-citas` | Cliente |
-| `/gestion-citas`, `/fichas` | Recepción y administrador |
-| `/admin`, `/usuarios` | Administrador |
-
-La seguridad es solo de interfaz: la sesión vive en `localStorage` y puede editarse desde el navegador. La autenticación real corresponde al Parcial 3.
+- **Frontend:** React 19, Vite 8, React Router 7, Bootstrap 5, React Leaflet, Vitest + React Testing Library.
+- **Backend:** Spring Boot 4.1.2, Java 21, Maven, Spring Security, JWT (jjwt 0.12.6), Spring Data JPA, springdoc-openapi (Swagger).
+- **Base de datos:** PostgreSQL.
 
 ## Estructura
-- `src/pages`: vistas (Home, Servicios, Agendar, Mis Citas, Historial, Login, Registro, Gestión de Citas, Fichas, Usuarios y Admin).
-- `src/components`: componentes reutilizables (`layout`: Navbar, Footer, Layout; `ui`: RutaProtegida, ServicioCard, MapaClinica).
-- `src/context`: estado compartido de las citas (CitasContext).
-- `src/constants`: roles, estados de cita y categorías.
-- `src/utils`: funciones puras (filtros, sesión, validaciones, vacunas, fichas, historial).
-- `src/services`: servicio simulado de datos (`apiServices`).
-- `src/data`: datos simulados.
-- `src/test`: configuración común de las pruebas.
+
+- `src/`: frontend React.
+- `backend/`: API REST Spring Boot.
+
+## Requisitos
+
+- Node.js 20.19 o superior
+- Java 21
+- Maven
+- PostgreSQL
+
+## 1. Base de datos
+
+Crear una base de datos vacía llamada `vetsanmarcos` (por ejemplo, desde pgAdmin).
+Las tablas, los servicios de prueba y los usuarios de demostración se crean solos al iniciar el backend.
+
+## 2. Variables de entorno del backend
+
+Definirlas en la terminal donde se inicia el backend (ver `backend/.env.example`).
+
+| Variable      | Descripción                                           | Por defecto |
+| ------------- | ----------------------------------------------------- | ----------- |
+| `DB_PASSWORD` | Clave del usuario de PostgreSQL                       | (vacía)     |
+| `DB_USERNAME` | Usuario de PostgreSQL                                 | `postgres`  |
+| `DB_PORT`     | Puerto de PostgreSQL                                  | `5432`      |
+| `JWT_SECRET`  | Secreto para firmar los tokens (mínimo 32 caracteres) | obligatoria |
+
+En PowerShell:
+
+```powershell
+$env:DB_PASSWORD = "tu_clave"
+$env:DB_PORT = "5432"
+$env:DB_USERNAME = "postgres"
+$env:JWT_SECRET = "un-secreto-de-al-menos-32-caracteres"
+```
+
+## 3. Iniciar el backend
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger-ui.html
+
+## 4. Iniciar el frontend
+
+```bash
+npm install
+npm run dev
+```
+
+Abrir http://localhost:5173 (el backend solo acepta peticiones desde esa dirección).
+La URL del backend se puede cambiar con la variable `VITE_API_URL`.
+
+## Usuarios de demostración
+
+| Rol           | Correo                  | Contraseña |
+| ------------- | ----------------------- | ---------- |
+| administrador | admin@sanmarcos.cl      | 1234       |
+| recepción     | recepcion@sanmarcos.cl  | 1234       |
+| cliente       | dueno.demo@sanmarcos.cl | 1234       |
+
+Los clientes nuevos se crean desde "Registrarse".
+
+## Endpoints principales
+
+| Ruta                                                                | Acceso                           |
+| ------------------------------------------------------------------- | -------------------------------- |
+| `POST /api/auth/login`, `POST /api/auth/registro`                   | Público                          |
+| `GET /api/servicios`                                                | Público                          |
+| `POST`, `PUT`, `DELETE /api/servicios`                              | Administrador                    |
+| `/api/usuarios`                                                     | Administrador                    |
+| `GET /api/mascotas/mias`, `POST /api/mascotas`                      | Sesión iniciada                  |
+| `GET /api/mascotas`                                                 | Administrador y recepción        |
+| `GET`, `PUT /api/mascotas/{id}`                                     | Dueño, administrador y recepción |
+| `DELETE /api/mascotas/{id}`                                         | Administrador y recepción        |
+| `GET /api/citas/mias`, `GET /api/citas/ocupadas`, `POST /api/citas` | Sesión iniciada                  |
+| `GET /api/citas`                                                    | Administrador y recepción        |
+| `GET`, `PUT /api/citas/{id}`                                        | Dueño, administrador y recepción |
+| `DELETE /api/citas/{id}`                                            | Administrador y recepción        |
+
+## Reglas de negocio de las citas
+
+- Atención de lunes a sábado, domingos cerrado.
+- Horas de inicio: 09:00 a 12:00 y 15:00 a 17:00, cada 30 minutos.
+- La atención termina a las 17:30.
+- No se permiten fechas pasadas ni citas que se crucen en el horario.
+- Toda cita nueva parte como Pendiente.
+- Un cliente solo puede cancelar o reagendar sus citas; confirmar o marcar como atendida es solo del personal.
+
+## Rutas del frontend
+
+| Ruta                                                 | Acceso                       |
+| ---------------------------------------------------- | ---------------------------- |
+| `/`, `/servicios`, `/agendar`, `/login`, `/registro` | Todos                        |
+| `/historial`                                         | Cualquier usuario con sesión |
+| `/mis-citas`                                         | Cliente                      |
+| `/gestion-citas`, `/fichas`                          | Recepción y administrador    |
+| `/admin`, `/usuarios`                                | Administrador                |
 
 ## Pruebas
-140 pruebas en 24 archivos con Vitest + React Testing Library, junto al código que prueban (`*.test.jsx` y `*.test.js`). Incluyen mocks y espías (`vi.mock`, `vi.fn`, `vi.spyOn`) y temporizadores simulados.
 
-Cobertura (`npm run test:coverage`): Statements 89,1 %, Branches 81,5 %, Functions 86,4 %, Lines 90,4 %.
+```bash
+npm test
+npm run test:coverage
+```

@@ -32,7 +32,11 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 Claims datos = jwtUtil.leer(cabecera.substring(7));
                 String rol = datos.get("rol", String.class);
-                UsuarioAutenticado(datos.getSubject(), rol);
+                // Un token firmado pero sin rol no sirve: no se autentica y la petición termina
+                // en 401
+                if (rol != null) {
+                    UsuarioAutenticado(datos.getSubject(), rol);
+                }
             } catch (JwtException | IllegalArgumentException e) {
                 // Token falso o vencido: no se autentica y la petición termina en 401
                 SecurityContextHolder.clearContext();

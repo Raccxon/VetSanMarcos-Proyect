@@ -28,7 +28,7 @@ export default function HomePage() {
             {/* Categorías: cada cuadro lleva a los servicios de esa categoría */}
             <div className="row g-4 mb-5">
                 {CATEGORIAS.map((cat) => (
-                    <div className="col-12 col-md-6 col-lg-3" key={cat.nombre}>
+                    <div className="col-12 col-md-6 col-lg-4" key={cat.nombre}>
                         <Link
                             to={`/servicios?categoria=${encodeURIComponent(cat.nombre)}`}
                             className="text-decoration-none"
