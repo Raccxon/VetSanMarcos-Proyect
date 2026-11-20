@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useCitas } from '../context/CitasContext.jsx';
+import { listarCitas, actualizarCita, cuerpoCita } from '../services/citasService';
+import { listarMascotas } from '../services/mascotaService';
+import { listarUsuarios } from '../services/usuarioService';
+import { ESTADOS_CITA } from '../constants/estadosCitas';
+import { ROLES } from '../constants/roles';
 import { obtenerFechaHoy } from '../utils/fechas';
 import {
   getServicios,
@@ -11,6 +15,7 @@ import {
 const ESTADOS_GRAFICO = [
   { estado: 'Pendiente', color: 'bg-warning text-dark' },
   { estado: 'Confirmada', color: 'bg-success' },
+  { estado: 'Reagendada', color: 'bg-info text-dark' },
   { estado: 'Atendida', color: 'bg-primary' },
   { estado: 'Cancelada', color: 'bg-danger' },
 ];
@@ -32,7 +37,13 @@ export default function AdminPage({ vista, onCambiarVista }) {
   const [vistaLocal, setVistaLocal] = useState('dashboard');
   const pestaniaActiva = vista ?? vistaLocal;
   const setPestaniaActiva = onCambiarVista ?? setVistaLocal;
-  const { citas, actualizarEstadoCita } = useCitas();
+
+  // Citas, mascotas y clientes reales: vienen del backend
+  const [citas, setCitas] = useState([]);
+  const [mascotas, setMascotas] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [errorDatos, setErrorDatos] = useState('');
+  const [errorEstado, setErrorEstado] = useState('');
 
   // Filtros de búsqueda
   const [busqueda, setBusqueda] = useState('');
@@ -55,6 +66,31 @@ export default function AdminPage({ vista, onCambiarVista }) {
     'Peluquería y Estética'
   ]);
 
+  // Al abrir el panel se piden al backend las citas, las mascotas y los clientes.
+  // Los tres endpoints exigen rol admin (o recepción): un cliente recibiría 403.
+  useEffect(() => {
+    let activo = true;
+
+    const cargar = (pedir, guardar) =>
+      pedir()
+        .then((datos) => {
+          if (activo) guardar(datos);
+        })
+        .catch((err) => {
+          if (activo) setErrorDatos(err.message);
+        });
+
+    cargar(listarCitas, setCitas);
+    cargar(listarMascotas, setMascotas);
+    cargar(listarUsuarios, (usuarios) =>
+      setClientes(usuarios.filter((u) => u.rol === ROLES.CLIENTE))
+    );
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   // Al abrir el panel se piden los servicios al backend
   useEffect(() => {
     let activo = true;
@@ -75,21 +111,18 @@ export default function AdminPage({ vista, onCambiarVista }) {
     };
   }, []);
 
-  // Obtener lista dinámica de clientes a partir de las citas agendadas
-  const clientesDinamicos = Array.from(
-    new Map(
-      citas.map((c) => [
-        c.rutDuenio,
-        {
-          rut: c.rutDuenio,
-          nombre: c.nombreDuenio,
-          telefono: c.telefono,
-          mascota: c.nombreMascota,
-          especie: c.especie
-        }
-      ])
-    ).values()
-  );
+  // El admin cambia el estado de una cita: el backend valida y devuelve la cita guardada
+  const cambiarEstado = async (cita, estado) => {
+    setErrorEstado('');
+
+    try {
+      const actualizada = await actualizarCita(cita.id, cuerpoCita(cita, { estado }));
+      setCitas((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)));
+    } catch (err) {
+      // El selector vuelve al estado anterior porque la lista no cambió
+      setErrorEstado(err.message);
+    }
+  };
 
   // Se guarda al salir de la casilla (no en cada tecla) para no llamar al backend de más.
   // El backend pide el servicio completo en el PUT, por eso se envía con el stock nuevo.
@@ -151,10 +184,11 @@ export default function AdminPage({ vista, onCambiarVista }) {
   // Filtrado flexible de citas
   const citasFiltradas = citas.filter((c) => {
     const texto = busqueda.toLowerCase();
+    const dueno = c.mascota.dueno;
     const coincideTexto =
-      c.nombreDuenio.toLowerCase().includes(texto) ||
-      c.rutDuenio.toLowerCase().includes(texto) ||
-      c.nombreMascota.toLowerCase().includes(texto);
+      (dueno?.nombre ?? '').toLowerCase().includes(texto) ||
+      (dueno?.rut ?? '').toLowerCase().includes(texto) ||
+      c.mascota.nombre.toLowerCase().includes(texto);
 
     const hoy = obtenerFechaHoy();
     const fechaCita = c.fecha;
@@ -233,6 +267,12 @@ export default function AdminPage({ vista, onCambiarVista }) {
         </li>
       </ul>
 
+      {errorDatos && pestaniaActiva !== 'stock' && (
+        <div className="alert alert-danger" role="alert">
+          {errorDatos}
+        </div>
+      )}
+
       {pestaniaActiva === 'dashboard' && (
         <div className="row g-3">
           <div className="col-12 col-md-4">
@@ -250,7 +290,7 @@ export default function AdminPage({ vista, onCambiarVista }) {
           <div className="col-12 col-md-4">
             <div className="card text-white bg-secondary p-3">
               <h4 className="text-white">Clientes Registrados</h4>
-              <p className="display-6 m-0 text-white">{clientesDinamicos.length}</p>
+              <p className="display-6 m-0 text-white">{clientes.length}</p>
             </div>
           </div>
 
@@ -441,6 +481,12 @@ export default function AdminPage({ vista, onCambiarVista }) {
         <div className="card p-3">
           <h4>Agenda General de Citas</h4>
 
+          {errorEstado && (
+            <div className="alert alert-danger" role="alert">
+              {errorEstado}
+            </div>
+          )}
+
           {/* FILTROS DE BÚSQUEDA Y FECHA */}
           <div className="row g-2 mb-3 bg-light p-3 rounded">
             <div className="col-12 col-md-4">
@@ -505,22 +551,22 @@ export default function AdminPage({ vista, onCambiarVista }) {
                   citasFiltradas.map((c) => (
                     <tr key={c.id}>
                       <td><strong>{c.id}</strong></td>
-                      <td>{c.nombreDuenio} <br /><small className="text-muted">{c.rutDuenio}</small></td>
-                      <td><small>{c.telefono}</small></td>
-                      <td>{c.nombreMascota} ({c.especie})</td>
-                      <td>{c.servicioNombre} ({c.duracion || 30} min)</td>
+                      <td>{c.mascota.dueno?.nombre} <br /><small className="text-muted">{c.mascota.dueno?.rut ?? 'Sin RUT'}</small></td>
+                      <td><small>{c.mascota.dueno?.telefono ?? '—'}</small></td>
+                      <td>{c.mascota.nombre} ({c.mascota.especie})</td>
+                      <td>{c.servicio.nombre} ({c.servicio.duracion} min)</td>
                       <td>{c.fecha} - {c.hora} hrs</td>
                       <td>{obtenerBadgeFecha(c.fecha)}</td>
                       <td>
                         <select
                           className="form-select form-select-sm"
+                          aria-label={`Estado de la cita ${c.id}`}
                           value={c.estado}
-                          onChange={(e) => actualizarEstadoCita(c.id, e.target.value)}
+                          onChange={(e) => cambiarEstado(c, e.target.value)}
                         >
-                          <option value="Pendiente">Pendiente</option>
-                          <option value="Confirmada">Confirmada</option>
-                          <option value="Atendida">Atendida</option>
-                          <option value="Cancelada">Cancelada</option>
+                          {ESTADOS_CITA.map((estado) => (
+                            <option key={estado} value={estado}>{estado}</option>
+                          ))}
                         </select>
                       </td>
                     </tr>
@@ -534,7 +580,7 @@ export default function AdminPage({ vista, onCambiarVista }) {
 
       {pestaniaActiva === 'clientes' && (
         <div className="card p-3">
-          <h4>Directorio Dinámico de Clientes y Mascotas</h4>
+          <h4>Directorio de Clientes y Mascotas</h4>
           <div className="table-responsive">
             <table className="table table-bordered">
               <thead>
@@ -547,18 +593,18 @@ export default function AdminPage({ vista, onCambiarVista }) {
                 </tr>
               </thead>
               <tbody>
-                {clientesDinamicos.length === 0 ? (
+                {mascotas.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center text-muted">Aún no hay clientes registrados mediante agendamientos.</td>
+                    <td colSpan="5" className="text-center text-muted">Aún no hay mascotas registradas.</td>
                   </tr>
                 ) : (
-                  clientesDinamicos.map((cli) => (
-                    <tr key={cli.rut}>
-                      <td><strong>{cli.rut}</strong></td>
-                      <td>{cli.nombre}</td>
-                      <td>{cli.telefono}</td>
-                      <td>{cli.mascota}</td>
-                      <td>{cli.especie}</td>
+                  mascotas.map((m) => (
+                    <tr key={m.id}>
+                      <td><strong>{m.dueno?.rut ?? 'Sin RUT'}</strong></td>
+                      <td>{m.dueno?.nombre}</td>
+                      <td>{m.dueno?.telefono ?? '—'}</td>
+                      <td>{m.nombre}</td>
+                      <td>{m.especie}</td>
                     </tr>
                   ))
                 )}
