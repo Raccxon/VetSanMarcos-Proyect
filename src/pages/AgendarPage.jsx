@@ -1,120 +1,112 @@
-import { useState } from 'react';
-import { servicios } from '../data/servicios';
-import { useCitas } from '../context/CitasContext.jsx';
-import {
-    rutValido,
-    fechaNoPasada,
-    formatearRut,
-    formatearTelefonoChileno,
-    telefonoChilenoValido,
-    telefonoExtranjeroValido
-} from '../utils/validaciones';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getServicios } from '../services/apiServices';
+import { listarMisMascotas, crearMascota } from '../services/mascotaService';
+import { crearCita, horasOcupadas } from '../services/citasService';
+import { obtenerSesion } from '../utils/sesion';
+import { fechaNoPasada } from '../utils/validaciones';
 import { obtenerFechaHoy } from '../utils/fechas';
+import { BLOQUES_HORARIO, esDomingo, bloqueNoDisponible } from '../utils/agenda';
 
-const horaAMinutos = (horaStr) => {
-    const [h, m] = horaStr.split(':').map(Number);
-    return h * 60 + m;
+// Valor del selector de mascota para registrar una nueva
+const NUEVA = 'nueva';
+
+const FORM_VACIO = {
+    mascotaId: '',
+    nombreMascota: '',
+    especie: 'Perro',
+    raza: '',
+    edad: '',
+    servicioId: '',
+    fecha: '',
+    hora: '',
+    motivo: ''
 };
 
-// Obtiene la duración del servicio según el servicioId
-const obtenerDuracionServicio = (servicioId) => {
-    const serv = servicios.find((s) => s.id === servicioId);
-    if (!serv) return 30;
-
-    const nombre = serv.nombre.toLowerCase();
-
-    // Esterilización, castración y cirugías asignan 60 minutos automáticamente
-    if (
-        nombre.includes('cirug') ||
-        nombre.includes('esteriliza') ||
-        nombre.includes('castra')
-    ) {
-        return 60;
-    }
-    if (nombre.includes('vacun')) return 15;
-    if (nombre.includes('examen') || nombre.includes('hemograma')) return 45;
-    return 30;
+// Si el cliente no tiene mascotas se abre directo el registro de una nueva;
+// si tiene una sola, queda elegida
+const mascotaPorDefecto = (mascotas) => {
+    if (mascotas.length === 0) return NUEVA;
+    if (mascotas.length === 1) return String(mascotas[0].id);
+    return '';
 };
 
 export default function AgendarPage() {
-    const { agregarCita, citas } = useCitas();
+    const sesion = obtenerSesion();
 
-    const [formData, setFormData] = useState({
-        nombreDuenio: '',
-        rutDuenio: '',
-        telefono: '',
-        esExtranjero: false,
-        email: '',
-        nombreMascota: '',
-        especie: 'Perro',
-        servicioId: '',
-        fecha: '',
-        hora: '',
-        motivo: ''
-    });
+    const [servicios, setServicios] = useState([]);
+    const [mascotas, setMascotas] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [errorCarga, setErrorCarga] = useState('');
 
+    const [formData, setFormData] = useState(FORM_VACIO);
     const [errores, setErrores] = useState({});
+    const [errorGeneral, setErrorGeneral] = useState('');
+    const [enviando, setEnviando] = useState(false);
     const [citaConfirmada, setCitaConfirmada] = useState(null);
 
-    const bloquesHorario = [
-        '09:00', '09:30', '10:00', '10:30',
-        '11:00', '11:30', '12:00', '15:00',
-        '15:30', '16:00', '16:30', '17:00'
-    ];
+    // Horas ocupadas del día elegido, tal como las entrega el backend.
+    // Se guarda junto a la fecha a la que corresponden para no mostrar las de otro día.
+    const [ocupadas, setOcupadas] = useState({ fecha: '', lista: [], fallo: false });
+    const [recarga, setRecarga] = useState(0);
 
-    // Cierre de jornada establecido en 17:30 hrs (1050 min)
-    const HORA_CIERRE_MINUTOS = horaAMinutos('17:30');
+    // Al abrir la pantalla se piden al backend el catálogo y las mascotas del cliente
+    useEffect(() => {
+        let activo = true;
 
-    const esDomingo = (fechaStr) => {
-        if (!fechaStr) return false;
-        const date = new Date(fechaStr + 'T00:00:00');
-        return date.getDay() === 0;
-    };
+        Promise.all([getServicios(), listarMisMascotas()])
+            .then(([serviciosBackend, mascotasBackend]) => {
+                if (!activo) return;
+                setServicios(serviciosBackend);
+                setMascotas(mascotasBackend);
+                setFormData((prev) => ({ ...prev, mascotaId: mascotaPorDefecto(mascotasBackend) }));
+            })
+            .catch((err) => {
+                if (activo) setErrorCarga(err.message);
+            })
+            .finally(() => {
+                if (activo) setCargando(false);
+            });
 
-    const esHoraOcupadaOExcedeCierre = (horaEvaluar) => {
-        if (!formData.fecha) return false;
+        return () => {
+            activo = false;
+        };
+    }, []);
 
-        const minEvaluarInicio = horaAMinutos(horaEvaluar);
-        const duracionNueva = formData.servicioId ? obtenerDuracionServicio(formData.servicioId) : 30;
-        const minEvaluarFin = minEvaluarInicio + duracionNueva;
+    // Cada vez que cambia la fecha se piden las horas ya tomadas de ese día
+    useEffect(() => {
+        const fecha = formData.fecha;
+        if (!fecha || esDomingo(fecha)) return;
 
-        // Bloquea horas que sobrepasen el cierre de las 17:30 hrs
-        if (minEvaluarFin > HORA_CIERRE_MINUTOS) return true;
+        let activo = true;
 
-        const citasDelDia = (citas || []).filter((c) => c.fecha === formData.fecha && c.estado !== 'Cancelada');
+        horasOcupadas(fecha)
+            .then((lista) => {
+                if (activo) setOcupadas({ fecha, lista, fallo: false });
+            })
+            .catch(() => {
+                if (activo) setOcupadas({ fecha, lista: [], fallo: true });
+            });
 
-        return citasDelDia.some((cita) => {
-            const minCitaInicio = horaAMinutos(cita.hora);
-            const duracionCita = cita.duracion || obtenerDuracionServicio(cita.servicioId);
-            const minCitaFin = minCitaInicio + duracionCita;
+        return () => {
+            activo = false;
+        };
+    }, [formData.fecha, recarga]);
 
-            return minEvaluarInicio < minCitaFin && minEvaluarFin > minCitaInicio;
-        });
-    };
+    const ocupadasDelDia = ocupadas.fecha === formData.fecha ? ocupadas.lista : [];
+    const falloHoras = ocupadas.fecha === formData.fecha && ocupadas.fallo;
+
+    const servicioSeleccionado = servicios.find((s) => String(s.id) === formData.servicioId);
+    const duracionActual = servicioSeleccionado ? servicioSeleccionado.duracion : 30;
+
+    const noDisponible = (bloque) => bloqueNoDisponible(bloque, duracionActual, ocupadasDelDia);
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-
-        if (type === 'checkbox' && name === 'esExtranjero') {
-            setFormData((prev) => ({
-                ...prev,
-                esExtranjero: checked,
-                telefono: ''
-            }));
-            return;
-        }
-
-        let nuevoValor = value;
-
-        if (name === 'rutDuenio') {
-            nuevoValor = formatearRut(value);
-        } else if (name === 'telefono' && !formData.esExtranjero) {
-            nuevoValor = formatearTelefonoChileno(value);
-        }
+        const { name, value } = e.target;
 
         setFormData((prev) => ({
             ...prev,
-            [name]: nuevoValor,
+            [name]: value,
             ...(name === 'fecha' || name === 'servicioId' ? { hora: '' } : {})
         }));
 
@@ -126,33 +118,20 @@ export default function AgendarPage() {
     const validarFormulario = () => {
         const nuevosErrores = {};
 
-        if (!formData.nombreDuenio.trim()) nuevosErrores.nombreDuenio = 'El nombre del dueño es obligatorio';
+        if (!formData.mascotaId) nuevosErrores.mascotaId = 'Debe seleccionar una mascota';
 
-        if (!formData.rutDuenio.trim()) {
-            nuevosErrores.rutDuenio = 'El RUT es obligatorio';
-        } else if (!rutValido(formData.rutDuenio)) {
-            nuevosErrores.rutDuenio = 'Ingrese un RUT válido (ej. 12345678-K)';
-        }
+        if (formData.mascotaId === NUEVA) {
+            if (!formData.nombreMascota.trim()) nuevosErrores.nombreMascota = 'El nombre de la mascota es obligatorio';
+            if (!formData.raza.trim()) nuevosErrores.raza = 'La raza es obligatoria';
 
-        if (!formData.telefono.trim()) {
-            nuevosErrores.telefono = 'El teléfono es obligatorio';
-        } else if (!formData.esExtranjero) {
-            if (!telefonoChilenoValido(formData.telefono)) {
-                nuevosErrores.telefono = 'Ingrese los 8 dígitos de su celular chileno';
-            }
-        } else {
-            if (!telefonoExtranjeroValido(formData.telefono)) {
-                nuevosErrores.telefono = 'Ingrese un código de país y número válido (ej. +5511999999999)';
+            const edad = Number(formData.edad);
+            if (formData.edad === '') {
+                nuevosErrores.edad = 'La edad es obligatoria';
+            } else if (!Number.isInteger(edad) || edad < 0 || edad > 40) {
+                nuevosErrores.edad = 'La edad debe ser un número entero entre 0 y 40';
             }
         }
 
-        if (!formData.email.trim()) {
-            nuevosErrores.email = 'El correo electrónico es obligatorio';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            nuevosErrores.email = 'Ingrese un correo electrónico válido';
-        }
-
-        if (!formData.nombreMascota.trim()) nuevosErrores.nombreMascota = 'El nombre de la mascota es obligatorio';
         if (!formData.servicioId) nuevosErrores.servicioId = 'Debe seleccionar un servicio';
 
         if (!formData.fecha) {
@@ -165,7 +144,7 @@ export default function AgendarPage() {
 
         if (!formData.hora) {
             nuevosErrores.hora = 'Debe seleccionar un horario';
-        } else if (esHoraOcupadaOExcedeCierre(formData.hora)) {
+        } else if (noDisponible(formData.hora)) {
             nuevosErrores.hora = 'El horario seleccionado no está disponible o excede la jornada de atención';
         }
 
@@ -173,51 +152,73 @@ export default function AgendarPage() {
         return Object.keys(nuevosErrores).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validarFormulario()) return;
 
-        const servicioSeleccionado = servicios.find((s) => s.id === formData.servicioId);
-        const duracion = obtenerDuracionServicio(formData.servicioId);
+        setEnviando(true);
+        setErrorGeneral('');
 
-        const telefonoCompleto = formData.esExtranjero
-            ? `${formData.telefono} (Internacional)`
-            : `+56 9 ${formData.telefono} (Chile)`;
+        try {
+            let mascotaId = formData.mascotaId;
 
-        const nuevaCita = {
-            id: `CIT-${Date.now().toString().slice(-4)}`,
-            ...formData,
-            duracion,
-            telefono: telefonoCompleto,
-            servicioNombre: servicioSeleccionado ? servicioSeleccionado.nombre : '',
-            precio: servicioSeleccionado ? servicioSeleccionado.precio : 0,
-            estado: 'Pendiente'
-        };
+            // Mascota nueva: primero se registra a nombre del cliente de la sesión
+            if (mascotaId === NUEVA) {
+                const creada = await crearMascota({
+                    nombre: formData.nombreMascota.trim(),
+                    especie: formData.especie,
+                    raza: formData.raza.trim(),
+                    edad: Number(formData.edad),
+                    dueno: { id: sesion?.id }
+                });
 
-        agregarCita(nuevaCita);
-        setCitaConfirmada(nuevaCita);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Queda elegida: si la cita falla y el cliente reintenta, no se crea otra mascota igual
+                setMascotas((prev) => [...prev, creada]);
+                setFormData((prev) => ({ ...prev, mascotaId: String(creada.id) }));
+                mascotaId = String(creada.id);
+            }
+
+            // El estado no se envía: el backend deja toda cita nueva como Pendiente
+            const cita = await crearCita({
+                mascota: { id: Number(mascotaId) },
+                servicio: { id: Number(formData.servicioId) },
+                fecha: formData.fecha,
+                hora: formData.hora,
+                motivo: formData.motivo.trim() || null
+            });
+
+            setCitaConfirmada(cita);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err) {
+            // Ej.: 409 "Ese horario ya está ocupado" o 400 por una regla de horario
+            setErrorGeneral(err.message);
+
+            if (err.status === 409) {
+                // Alguien más tomó esa hora: se vuelve a pedir qué horas quedan libres
+                setFormData((prev) => ({ ...prev, hora: '' }));
+                setRecarga((n) => n + 1);
+            }
+        } finally {
+            setEnviando(false);
+        }
     };
 
     const handleNuevaCita = () => {
         setCitaConfirmada(null);
-        setFormData({
-            nombreDuenio: '',
-            rutDuenio: '',
-            telefono: '',
-            esExtranjero: false,
-            email: '',
-            nombreMascota: '',
-            especie: 'Perro',
-            servicioId: '',
-            fecha: '',
-            hora: '',
-            motivo: ''
-        });
+        setErrorGeneral('');
+        setErrores({});
+        setFormData({ ...FORM_VACIO, mascotaId: mascotaPorDefecto(mascotas) });
     };
 
     const clase = (campo, base = 'form-control') => `${base} ${errores[campo] ? 'is-invalid' : ''}`;
-    const duracionActual = formData.servicioId ? obtenerDuracionServicio(formData.servicioId) : 30;
+
+    if (cargando) {
+        return (
+            <div className="container py-4">
+                <p className="text-muted">Cargando...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="container py-4">
@@ -226,6 +227,12 @@ export default function AgendarPage() {
                     <h1 className="text-center mb-2">Agendar Cita Médica</h1>
                     <p className="text-center text-muted mb-4">Reserva la atención para tu mascota en Veterinaria San Marcos (Rancagua)</p>
 
+                    {errorCarga && (
+                        <div className="alert alert-danger" role="alert">
+                            {errorCarga}
+                        </div>
+                    )}
+
                     {citaConfirmada ? (
                         <div className="alert alert-success text-center p-4">
                             <h2 className="h3 text-success mt-0">¡Cita Solicitada con Éxito!</h2>
@@ -233,145 +240,121 @@ export default function AgendarPage() {
 
                             <div className="bg-white rounded p-3 my-4 text-start">
                                 <p><strong>Código de Reserva:</strong> {citaConfirmada.id}</p>
-                                <p><strong>Dueño:</strong> {citaConfirmada.nombreDuenio} (RUT: {citaConfirmada.rutDuenio})</p>
-                                <p><strong>Teléfono:</strong> {citaConfirmada.telefono}</p>
-                                <p><strong>Mascota:</strong> {citaConfirmada.nombreMascota} ({citaConfirmada.especie})</p>
-                                <p><strong>Servicio:</strong> {citaConfirmada.servicioNombre}</p>
+                                <p><strong>Mascota:</strong> {citaConfirmada.mascota.nombre} ({citaConfirmada.mascota.especie})</p>
+                                <p><strong>Servicio:</strong> {citaConfirmada.servicio.nombre}</p>
                                 <p><strong>Fecha y Hora:</strong> {citaConfirmada.fecha} a las {citaConfirmada.hora} hrs</p>
-                                <p><strong>Duración Estimada:</strong> {citaConfirmada.duracion} min</p>
-                                <p className="mb-0"><strong>Valor Estimado:</strong> ${citaConfirmada.precio.toLocaleString('es-CL')}</p>
+                                <p><strong>Duración Estimada:</strong> {citaConfirmada.servicio.duracion} min</p>
+                                <p className="mb-0"><strong>Valor Estimado:</strong> ${citaConfirmada.servicio.precio.toLocaleString('es-CL')}</p>
                             </div>
 
-                            <button type="button" onClick={handleNuevaCita} className="btn btn-success">
-                                Agendar otra cita
-                            </button>
+                            <div className="d-flex flex-wrap justify-content-center gap-2">
+                                <button type="button" onClick={handleNuevaCita} className="btn btn-success">
+                                    Agendar otra cita
+                                </button>
+                                <Link to="/mis-citas" className="btn btn-outline-success">
+                                    Ver mis citas
+                                </Link>
+                            </div>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} noValidate className="custom-card p-3 p-md-4">
-                            <h3 className="h5 border-bottom pb-2 mb-3">1. Datos del Dueño</h3>
+                            {errorGeneral && (
+                                <div className="alert alert-danger" role="alert">
+                                    {errorGeneral}
+                                </div>
+                            )}
+
+                            <p className="text-muted mb-4">
+                                Agendando como <strong>{sesion?.nombre}</strong> ({sesion?.email})
+                            </p>
+
+                            <h3 className="h5 border-bottom pb-2 mb-3">1. Tu Mascota</h3>
                             <div className="row g-3 mb-4">
-                                <div className="col-12 col-md-6">
-                                    <label htmlFor="nombreDuenio" className="form-label fw-bold">Nombre Completo *</label>
-                                    <input
-                                        type="text"
-                                        id="nombreDuenio"
-                                        name="nombreDuenio"
-                                        value={formData.nombreDuenio}
-                                        onChange={handleChange}
-                                        placeholder="Ej. Juan Pérez"
-                                        className={clase('nombreDuenio')}
-                                    />
-                                    {errores.nombreDuenio && <div className="invalid-feedback">{errores.nombreDuenio}</div>}
-                                </div>
-
-                                <div className="col-12 col-md-6">
-                                    <label htmlFor="rutDuenio" className="form-label fw-bold">RUT *</label>
-                                    <input
-                                        type="text"
-                                        id="rutDuenio"
-                                        name="rutDuenio"
-                                        maxLength={10}
-                                        value={formData.rutDuenio}
-                                        onChange={handleChange}
-                                        placeholder="12345678-K"
-                                        className={clase('rutDuenio')}
-                                    />
-                                    {errores.rutDuenio && <div className="invalid-feedback">{errores.rutDuenio}</div>}
-                                </div>
-
-                                <div className="col-12 col-md-6">
-                                    <label htmlFor="telefono" className="form-label fw-bold">Teléfono *</label>
-                                    {!formData.esExtranjero ? (
-                                        <div className="input-group">
-                                            <span className="input-group-text bg-light fw-bold">+56 9</span>
-                                            <input
-                                                type="tel"
-                                                id="telefono"
-                                                name="telefono"
-                                                maxLength={8}
-                                                value={formData.telefono}
-                                                onChange={handleChange}
-                                                placeholder="12345678"
-                                                className={clase('telefono')}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <input
-                                            type="tel"
-                                            id="telefono"
-                                            name="telefono"
-                                            value={formData.telefono}
-                                            onChange={handleChange}
-                                            placeholder="+5511999999999"
-                                            className={clase('telefono')}
-                                        />
-                                    )}
-                                    {errores.telefono && <div className="invalid-feedback d-block">{errores.telefono}</div>}
-
-                                    <div className="form-check mt-2">
-                                        <input
-                                            type="checkbox"
-                                            id="esExtranjero"
-                                            name="esExtranjero"
-                                            className="form-check-input"
-                                            checked={formData.esExtranjero}
-                                            onChange={handleChange}
-                                        />
-                                        <label htmlFor="esExtranjero" className="form-check-label small text-muted">
-                                            No poseo número chileno
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div className="col-12 col-md-6">
-                                    <label htmlFor="email" className="form-label fw-bold">Correo Electrónico *</label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="ejemplo@correo.cl"
-                                        className={clase('email')}
-                                    />
-                                    {errores.email && <div className="invalid-feedback">{errores.email}</div>}
-                                </div>
-                            </div>
-
-                            <h3 className="h5 border-bottom pb-2 mb-3">2. Datos de la Mascota</h3>
-                            <div className="row g-3 mb-4">
-                                <div className="col-12 col-md-6">
-                                    <label htmlFor="nombreMascota" className="form-label fw-bold">Nombre Mascota *</label>
-                                    <input
-                                        type="text"
-                                        id="nombreMascota"
-                                        name="nombreMascota"
-                                        value={formData.nombreMascota}
-                                        onChange={handleChange}
-                                        placeholder="Ej. Cachupín"
-                                        className={clase('nombreMascota')}
-                                    />
-                                    {errores.nombreMascota && <div className="invalid-feedback">{errores.nombreMascota}</div>}
-                                </div>
-
-                                <div className="col-12 col-md-6">
-                                    <label htmlFor="especie" className="form-label fw-bold">Especie *</label>
+                                <div className="col-12">
+                                    <label htmlFor="mascotaId" className="form-label fw-bold">Mascota *</label>
                                     <select
-                                        name="especie"
-                                        id="especie"
-                                        value={formData.especie}
+                                        id="mascotaId"
+                                        name="mascotaId"
+                                        value={formData.mascotaId}
                                         onChange={handleChange}
-                                        className="form-select"
+                                        className={clase('mascotaId', 'form-select')}
                                     >
-                                        <option value="Perro">Perro</option>
-                                        <option value="Gato">Gato</option>
-                                        <option value="Conejo">Conejo</option>
-                                        <option value="Ave">Ave</option>
+                                        <option value="">-- Seleccione una mascota --</option>
+                                        {mascotas.map((m) => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.nombre} ({m.especie})
+                                            </option>
+                                        ))}
+                                        <option value={NUEVA}>+ Registrar una nueva mascota</option>
                                     </select>
+                                    {errores.mascotaId && <div className="invalid-feedback">{errores.mascotaId}</div>}
                                 </div>
+
+                                {formData.mascotaId === NUEVA && (
+                                    <>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="nombreMascota" className="form-label fw-bold">Nombre Mascota *</label>
+                                            <input
+                                                type="text"
+                                                id="nombreMascota"
+                                                name="nombreMascota"
+                                                value={formData.nombreMascota}
+                                                onChange={handleChange}
+                                                placeholder="Ej. Cachupín"
+                                                className={clase('nombreMascota')}
+                                            />
+                                            {errores.nombreMascota && <div className="invalid-feedback">{errores.nombreMascota}</div>}
+                                        </div>
+
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="especie" className="form-label fw-bold">Especie *</label>
+                                            <select
+                                                name="especie"
+                                                id="especie"
+                                                value={formData.especie}
+                                                onChange={handleChange}
+                                                className="form-select"
+                                            >
+                                                <option value="Perro">Perro</option>
+                                                <option value="Gato">Gato</option>
+                                                <option value="Conejo">Conejo</option>
+                                                <option value="Ave">Ave</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="raza" className="form-label fw-bold">Raza *</label>
+                                            <input
+                                                type="text"
+                                                id="raza"
+                                                name="raza"
+                                                value={formData.raza}
+                                                onChange={handleChange}
+                                                placeholder="Ej. Mestizo"
+                                                className={clase('raza')}
+                                            />
+                                            {errores.raza && <div className="invalid-feedback">{errores.raza}</div>}
+                                        </div>
+
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="edad" className="form-label fw-bold">Edad (años) *</label>
+                                            <input
+                                                type="number"
+                                                id="edad"
+                                                name="edad"
+                                                min="0"
+                                                max="40"
+                                                value={formData.edad}
+                                                onChange={handleChange}
+                                                className={clase('edad')}
+                                            />
+                                            {errores.edad && <div className="invalid-feedback">{errores.edad}</div>}
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
-                            <h3 className="h5 border-bottom pb-2 mb-3">3. Selección de Hora</h3>
+                            <h3 className="h5 border-bottom pb-2 mb-3">2. Selección de Hora</h3>
                             <div className="row g-3 mb-4">
                                 <div className="col-12 col-md-6">
                                     <label htmlFor="servicioId" className="form-label fw-bold">Servicio Requerido *</label>
@@ -430,8 +413,8 @@ export default function AgendarPage() {
                                                     ? '-- Cerrado los domingos --'
                                                     : '-- Seleccione un bloque --'}
                                         </option>
-                                        {bloquesHorario.map((bloque) => {
-                                            const ocupado = esHoraOcupadaOExcedeCierre(bloque);
+                                        {BLOQUES_HORARIO.map((bloque) => {
+                                            const ocupado = noDisponible(bloque);
                                             return (
                                                 <option key={bloque} value={bloque} disabled={ocupado}>
                                                     {bloque} hrs {ocupado ? '(No disponible)' : ''}
@@ -440,6 +423,12 @@ export default function AgendarPage() {
                                         })}
                                     </select>
                                     {errores.hora && <div className="invalid-feedback">{errores.hora}</div>}
+
+                                    {falloHoras && (
+                                        <small className="text-warning d-block mt-1">
+                                            No se pudieron cargar los horarios ocupados. Puedes elegir uno igual: el servidor comprobará que esté libre.
+                                        </small>
+                                    )}
 
                                     {formData.servicioId && duracionActual > 30 && (
                                         <small className="text-muted d-block mt-1">
@@ -462,7 +451,7 @@ export default function AgendarPage() {
                                 ></textarea>
                             </div>
 
-                            <button type="submit" className="btn btn-primary w-100 fw-bold py-2">
+                            <button type="submit" className="btn btn-primary w-100 fw-bold py-2" disabled={enviando}>
                                 Confirmar y Agendar Cita
                             </button>
                         </form>
