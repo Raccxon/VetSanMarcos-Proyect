@@ -51,3 +51,53 @@ export const fechaNoPasada = (fecha, hoy = new Date()) => {
     const dia = String(hoy.getDate()).padStart(2, '0');
     return fecha >= `${anio}-${mes}-${dia}`;
 };
+
+// RUT con puntos mientras se escribe: 12.345.678-5 (máximo 8 dígitos + verificador)
+export const formatearRutConPuntos = (valor) => {
+    const limpio = valor
+        .replace(/[^0-9kK]/g, '')
+        .toUpperCase()
+        .replace(/K(?=.)/g, '')
+        .slice(0, 9);
+    if (limpio.length <= 1) return limpio;
+    const cuerpo = limpio.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${cuerpo}-${limpio.slice(-1)}`;
+};
+
+// RUT de 7 u 8 dígitos con dígito verificador correcto (acepta puntos y guion)
+export const rutConDvValido = (rut) => {
+    const limpio = (rut ?? '').replace(/[.\-\s]/g, '').toUpperCase();
+    if (!/^\d{7,8}[0-9K]$/.test(limpio)) return false;
+
+    const cuerpo = limpio.slice(0, -1);
+    const dv = limpio.slice(-1);
+    let suma = 0;
+    let multiplicador = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+        suma += Number(cuerpo[i]) * multiplicador;
+        multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+    }
+
+    const resto = 11 - (suma % 11);
+    const esperado = resto === 11 ? '0' : resto === 10 ? 'K' : String(resto);
+    return dv === esperado;
+};
+
+// Teléfono según el país elegido: solo dígitos, largo exacto y dígito inicial si el país lo exige
+export const telefonoPaisValido = (pais, numero) => {
+    if (!pais || !/^\d+$/.test(numero)) return false;
+    if (numero.length !== pais.digitos) return false;
+    return !pais.inicio || numero.startsWith(pais.inicio);
+};
+
+// Requisitos de la contraseña, para mostrarlos como guía mientras se escribe
+export const requisitosPassword = (password) => [
+    { texto: 'Mínimo 8 caracteres', cumple: password.length >= 8 },
+    { texto: 'Una letra mayúscula', cumple: /[A-Z]/.test(password) },
+    { texto: 'Una letra minúscula', cumple: /[a-z]/.test(password) },
+    { texto: 'Un número', cumple: /\d/.test(password) },
+];
+
+export const passwordValida = (password) =>
+    requisitosPassword(password).every((r) => r.cumple);

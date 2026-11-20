@@ -14,6 +14,7 @@ import GestionCitasPage from './pages/GestionCitasPage'
 import FichasPage from './pages/FichasPage'
 import UsuariosPage from './pages/UsuariosPage'
 import RegistroPage from './pages/RegistroPage'
+import MisMascotasPage from './pages/MisMascotasPage'
 
 // Lee la vista del panel desde la URL (/admin?vista=stock) para que la controle el Navbar
 function AdminRuta() {
@@ -50,7 +51,7 @@ function App() {
         />
 
         <Route path="login" element={<LoginPage />} />
-        <Route path="/registro" element={<RegistroPage />} />
+        <Route path="registro" element={<RegistroPage />} />
 
         <Route
           path="admin"
@@ -75,6 +76,15 @@ function App() {
           element={
             <RutaProtegida rolesPermitidos={[ROLES.RECEPCION, ROLES.ADMIN]}>
               <GestionCitasPage />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="mis-mascotas"
+          element={
+            <RutaProtegida rolesPermitidos={[ROLES.CLIENTE]}>
+              <MisMascotasPage />
             </RutaProtegida>
           }
         />

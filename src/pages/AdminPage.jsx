@@ -8,6 +8,16 @@ import {
   eliminarServicio,
 } from '../services/apiServices';
 
+const ESTADOS_GRAFICO = [
+  { estado: 'Pendiente', color: 'bg-warning text-dark' },
+  { estado: 'Confirmada', color: 'bg-success' },
+  { estado: 'Atendida', color: 'bg-primary' },
+  { estado: 'Cancelada', color: 'bg-danger' },
+];
+
+const porcentaje = (valor, maximo) =>
+  maximo === 0 ? 0 : Math.round((valor / maximo) * 100);
+
 const SERVICIO_VACIO = {
   nombre: '',
   categoria: 'Consultas y Urgencias',
@@ -168,6 +178,19 @@ export default function AdminPage({ vista, onCambiarVista }) {
     return coincideTexto && coincideFecha;
   });
 
+  // Datos de los gráficos del dashboard
+  const citasPorEstado = ESTADOS_GRAFICO.map((e) => ({
+    ...e,
+    total: citas.filter((c) => c.estado === e.estado).length,
+  }));
+  const maxCitasEstado = Math.max(...citasPorEstado.map((e) => e.total), 0);
+
+  const serviciosPorCategoria = categorias.map((cat) => ({
+    nombre: cat,
+    total: serviciosStock.filter((s) => s.categoria === cat).length,
+  }));
+  const maxServiciosCategoria = Math.max(...serviciosPorCategoria.map((c) => c.total), 0);
+
   const obtenerBadgeFecha = (fechaStr) => {
     const hoy = obtenerFechaHoy();
     if (fechaStr < hoy) return <span className="badge bg-secondary">Historial</span>;
@@ -215,19 +238,57 @@ export default function AdminPage({ vista, onCambiarVista }) {
           <div className="col-12 col-md-4">
             <div className="card text-white bg-primary p-3">
               <h4 className="text-white">Citas Totales</h4>
-              <p className="display-6 m-0">{citas.length}</p>
+              <p className="display-6 m-0 text-white">{citas.length}</p>
             </div>
           </div>
           <div className="col-12 col-md-4">
             <div className="card text-white bg-success p-3">
               <h4 className="text-white">Servicios Activos</h4>
-              <p className="display-6 m-0">{serviciosStock.length}</p>
+              <p className="display-6 m-0 text-white">{serviciosStock.length}</p>
             </div>
           </div>
           <div className="col-12 col-md-4">
-            <div className="card text-dark bg-warning p-3">
-              <h4 className="text-dark">Clientes Registrados</h4>
-              <p className="display-6 m-0">{clientesDinamicos.length}</p>
+            <div className="card text-white bg-secondary p-3">
+              <h4 className="text-white">Clientes Registrados</h4>
+              <p className="display-6 m-0 text-white">{clientesDinamicos.length}</p>
+            </div>
+          </div>
+
+          <div className="col-12 col-lg-6">
+            <div className="card p-3 h-100">
+              <h5 className="mb-3">Citas por estado</h5>
+              {citasPorEstado.map((e) => (
+                <div className="d-flex align-items-center mb-2" key={e.estado}>
+                  <span className="me-2" style={{ width: '100px' }}>{e.estado}</span>
+                  <div className="progress flex-grow-1" style={{ height: '22px' }}>
+                    <div
+                      className={`progress-bar ${e.color}`}
+                      role="progressbar"
+                      style={{ width: `${porcentaje(e.total, maxCitasEstado)}%` }}
+                    />
+                  </div>
+                  <strong className="ms-2" style={{ width: '30px' }}>{e.total}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-12 col-lg-6">
+            <div className="card p-3 h-100">
+              <h5 className="mb-3">Servicios por categoría</h5>
+              {serviciosPorCategoria.map((c) => (
+                <div className="d-flex align-items-center mb-2" key={c.nombre}>
+                  <span className="me-2" style={{ width: '170px' }}>{c.nombre}</span>
+                  <div className="progress flex-grow-1" style={{ height: '22px' }}>
+                    <div
+                      className="progress-bar bg-success"
+                      role="progressbar"
+                      style={{ width: `${porcentaje(c.total, maxServiciosCategoria)}%` }}
+                    />
+                  </div>
+                  <strong className="ms-2" style={{ width: '30px' }}>{c.total}</strong>
+                </div>
+              ))}
             </div>
           </div>
         </div>

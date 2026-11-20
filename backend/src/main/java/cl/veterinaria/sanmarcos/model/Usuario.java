@@ -40,7 +40,7 @@ public class Usuario {
     @Pattern(regexp = "^\\d{7,8}-[\\dkK]$", message = "El RUT debe tener formato 12345678-9")
     private String rut;
 
-    @Pattern(regexp = "^9\\d{8}$", message = "El teléfono debe ser un celular de 9 dígitos que empiece con 9")
+    @Pattern(regexp = "^(\\+\\d{9,14}|9\\d{8})$", message = "El teléfono debe incluir el código de país (ej: +56912345678)")
     private String telefono;
 
     public Usuario() {

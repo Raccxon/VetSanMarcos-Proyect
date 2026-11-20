@@ -21,6 +21,7 @@ const VISTAS_ADMIN = [
 const ENLACES_POR_ROL = {
     [ROLES.CLIENTE]: [
         ...PUBLICOS,
+        { to: '/mis-mascotas', texto: 'Mis Mascotas' },
         { to: '/agendar', texto: 'Agendar Cita' },
         { to: '/mis-citas', texto: 'Mis Citas' },
         { to: '/historial', texto: 'Ficha y Vacunas' },
@@ -99,9 +100,8 @@ function Navbar() {
                                 <li className="nav-item dropdown" key={enlace.texto}>
                                     <button
                                         type="button"
-                                        className={`nav-link dropdown-toggle ${
-                                            pathname === '/admin' ? 'active fw-bold' : ''
-                                        }`}
+                                        className={`nav-link dropdown-toggle ${pathname === '/admin' ? 'active fw-bold' : ''
+                                            }`}
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false"
                                     >
@@ -112,12 +112,11 @@ function Navbar() {
                                         {enlace.submenu.map((item) => (
                                             <li key={item.vista}>
                                                 <Link
-                                                    className={`dropdown-item ${
-                                                        pathname === '/admin' &&
-                                                        vistaActual === item.vista
+                                                    className={`dropdown-item ${pathname === '/admin' &&
+                                                            vistaActual === item.vista
                                                             ? 'active'
                                                             : ''
-                                                    }`}
+                                                        }`}
                                                     to={`/admin?vista=${item.vista}`}
                                                 >
                                                     {item.texto}
