@@ -39,7 +39,14 @@ function App() {
 
         <Route path="servicios" element={<ServiciosPage />} />
 
-        <Route path="agendar" element={<AgendarPage />} />
+        <Route
+          path="agendar"
+          element={
+            <RutaProtegida rolesPermitidos={[ROLES.CLIENTE]}>
+              <AgendarPage />
+            </RutaProtegida>
+          }
+        />
 
         <Route
           path="historial"
