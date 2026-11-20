@@ -1,14 +1,17 @@
-import { useState } from "react";
-import { useCitas } from "../context/CitasContext";
+import { useEffect, useState } from "react";
+import { listarCitas, actualizarCita, eliminarCita, cuerpoCita } from "../services/citasService";
 import { ESTADOS_CITA, CLASE_BADGE_ESTADO } from "../constants/estadosCitas";
+import { BLOQUES_HORARIO } from "../utils/agenda";
 import { fechaNoPasada } from "../utils/validaciones";
 import { obtenerFechaHoy } from "../utils/fechas";
 import { citasDelDia } from "../utils/historial";
 
-const HORARIOS = ["09:00", "10:00", "11:00", "12:00", "15:00", "16:00", "17:00"];
-
 export default function GestionCitasPage() {
-    const { citas, actualizarEstadoCita, reagendarCita, eliminarCita } = useCitas();
+    const [citas, setCitas] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [errorCarga, setErrorCarga] = useState("");
+    const [errorAccion, setErrorAccion] = useState("");
+
     const [filtro, setFiltro] = useState("Todas");
     const [fecha, setFecha] = useState(obtenerFechaHoy);
 
@@ -18,15 +21,61 @@ export default function GestionCitasPage() {
     const [nuevaHora, setNuevaHora] = useState("");
     const [errorReagendar, setErrorReagendar] = useState("");
 
-    const delDia = citasDelDia(citas, fecha);
+    // Al abrir la pantalla se piden al backend todas las citas (solo admin y recepción pueden)
+    useEffect(() => {
+        let activo = true;
+
+        listarCitas()
+            .then((lista) => {
+                if (activo) setCitas(lista);
+            })
+            .catch((err) => {
+                if (activo) setErrorCarga(err.message);
+            })
+            .finally(() => {
+                if (activo) setCargando(false);
+            });
+
+        return () => {
+            activo = false;
+        };
+    }, []);
+
+    // Reemplaza en la lista la cita que devolvió el backend
+    const reemplazar = (actualizada) =>
+        setCitas((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)));
+
+    const delDia = citasDelDia(citas, fecha).sort((a, b) => a.hora.localeCompare(b.hora));
     const citasVisibles =
         filtro === "Todas" ? delDia : delDia.filter((c) => c.estado === filtro);
+
+    const cambiarEstado = async (cita, estado) => {
+        setErrorAccion("");
+        try {
+            reemplazar(await actualizarCita(cita.id, cuerpoCita(cita, { estado })));
+        } catch (err) {
+            // Si el backend no lo permite (p. ej. reactivar una cita en una hora ya ocupada),
+            // la cita queda como estaba
+            setErrorAccion(err.message);
+        }
+    };
+
+    const borrar = async (cita) => {
+        setErrorAccion("");
+        try {
+            await eliminarCita(cita.id);
+            setCitas((prev) => prev.filter((c) => c.id !== cita.id));
+        } catch (err) {
+            setErrorAccion(err.message);
+        }
+    };
 
     const abrirReagendar = (cita) => {
         setReagendando(cita.id);
         setNuevaFecha(cita.fecha);
         setNuevaHora(cita.hora);
         setErrorReagendar("");
+        setErrorAccion("");
     };
 
     const cancelarReagendar = () => {
@@ -34,7 +83,7 @@ export default function GestionCitasPage() {
         setErrorReagendar("");
     };
 
-    const guardarReagendar = (id) => {
+    const guardarReagendar = async (cita) => {
         if (!nuevaFecha || !nuevaHora) {
             setErrorReagendar("Debes elegir fecha y horario");
             return;
@@ -43,9 +92,20 @@ export default function GestionCitasPage() {
             setErrorReagendar("La fecha no puede ser anterior a hoy");
             return;
         }
-        reagendarCita(id, nuevaFecha, nuevaHora);
-        setReagendando(null);
-        setErrorReagendar("");
+
+        try {
+            // El backend vuelve a exigir horario, domingos, cierre y cruces con otras citas
+            reemplazar(
+                await actualizarCita(
+                    cita.id,
+                    cuerpoCita(cita, { fecha: nuevaFecha, hora: nuevaHora, estado: "Reagendada" })
+                )
+            );
+            setReagendando(null);
+            setErrorReagendar("");
+        } catch (err) {
+            setErrorReagendar(err.message);
+        }
     };
 
     return (
@@ -91,10 +151,26 @@ export default function GestionCitasPage() {
                 </div>
             </div>
 
-            {citasVisibles.length === 0 ? (
-                <div className="alert alert-info" role="alert">
-                    No hay citas para el {fecha}.
+            {errorCarga && (
+                <div className="alert alert-danger" role="alert">
+                    {errorCarga}
                 </div>
+            )}
+
+            {errorAccion && (
+                <div className="alert alert-danger" role="alert">
+                    {errorAccion}
+                </div>
+            )}
+
+            {cargando ? (
+                <p className="text-muted">Cargando citas...</p>
+            ) : citasVisibles.length === 0 ? (
+                !errorCarga && (
+                    <div className="alert alert-info" role="alert">
+                        No hay citas para el {fecha}.
+                    </div>
+                )
             ) : (
                 <div className="table-responsive">
                     <table className="table table-hover align-middle">
@@ -113,9 +189,9 @@ export default function GestionCitasPage() {
                             {citasVisibles.map((cita) => (
                                 <tr key={cita.id}>
                                     <td>{cita.id}</td>
-                                    <td>{cita.nombreDuenio}</td>
-                                    <td>{cita.nombreMascota}</td>
-                                    <td>{cita.servicioNombre}</td>
+                                    <td>{cita.mascota.dueno?.nombre}</td>
+                                    <td>{cita.mascota.nombre}</td>
+                                    <td>{cita.servicio.nombre}</td>
                                     <td>{cita.hora}</td>
                                     <td>
                                         <span
@@ -127,7 +203,7 @@ export default function GestionCitasPage() {
                                             className="form-select form-select-sm d-inline-block w-auto"
                                             aria-label={`Cambiar estado de la cita ${cita.id}`}
                                             value={cita.estado}
-                                            onChange={(e) => actualizarEstadoCita(cita.id, e.target.value)}
+                                            onChange={(e) => cambiarEstado(cita, e.target.value)}
                                         >
                                             {ESTADOS_CITA.map((estado) => (
                                                 <option key={estado} value={estado}>
@@ -153,7 +229,7 @@ export default function GestionCitasPage() {
                                                     onChange={(e) => setNuevaHora(e.target.value)}
                                                 >
                                                     <option value="">-- Horario --</option>
-                                                    {HORARIOS.map((h) => (
+                                                    {BLOQUES_HORARIO.map((h) => (
                                                         <option key={h} value={h}>
                                                             {h} hrs
                                                         </option>
@@ -169,7 +245,7 @@ export default function GestionCitasPage() {
                                                         type="button"
                                                         className="btn btn-sm btn-success"
                                                         aria-label={`Guardar reagendamiento de la cita ${cita.id}`}
-                                                        onClick={() => guardarReagendar(cita.id)}
+                                                        onClick={() => guardarReagendar(cita)}
                                                     >
                                                         Guardar
                                                     </button>
@@ -196,7 +272,7 @@ export default function GestionCitasPage() {
                                                     type="button"
                                                     className="btn btn-sm btn-outline-danger"
                                                     aria-label={`Eliminar cita ${cita.id}`}
-                                                    onClick={() => eliminarCita(cita.id)}
+                                                    onClick={() => borrar(cita)}
                                                 >
                                                     Eliminar
                                                 </button>
