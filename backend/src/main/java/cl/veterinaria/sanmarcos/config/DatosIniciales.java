@@ -1,13 +1,17 @@
 package cl.veterinaria.sanmarcos.config;
 
+import cl.veterinaria.sanmarcos.model.Atencion;
 import cl.veterinaria.sanmarcos.model.Cita;
 import cl.veterinaria.sanmarcos.model.Mascota;
 import cl.veterinaria.sanmarcos.model.Servicio;
 import cl.veterinaria.sanmarcos.model.Usuario;
+import cl.veterinaria.sanmarcos.model.Vacuna;
+import cl.veterinaria.sanmarcos.repository.AtencionRepository;
 import cl.veterinaria.sanmarcos.repository.CitaRepository;
 import cl.veterinaria.sanmarcos.repository.MascotaRepository;
 import cl.veterinaria.sanmarcos.repository.ServicioRepository;
 import cl.veterinaria.sanmarcos.repository.UsuarioRepository;
+import cl.veterinaria.sanmarcos.repository.VacunaRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +28,8 @@ public class DatosIniciales {
                         UsuarioRepository usuarioRepo,
                         MascotaRepository mascotaRepo,
                         CitaRepository citaRepo,
+                        VacunaRepository vacunaRepo,
+                        AtencionRepository atencionRepo,
                         PasswordEncoder passwordEncoder) {
                 return args -> {
 
@@ -85,6 +91,26 @@ public class DatosIniciales {
                                                                 "Vacuna al día",
                                                                 "Confirmada")));
                         }
+
+                        // 3) Ficha clínica de ejemplo para Firulais (solo si aún no hay vacunas ni atenciones)
+                        if (vacunaRepo.count() == 0 && atencionRepo.count() == 0) {
+                                mascotaRepo.findAll().stream()
+                                                .filter(m -> "Firulais".equals(m.getNombre()))
+                                                .findFirst()
+                                                .ifPresent(firulais -> {
+                                                        vacunaRepo.save(vacuna(firulais, "Antirrábica",
+                                                                        LocalDate.now().minusMonths(2),
+                                                                        LocalDate.now().plusMonths(10)));
+                                                        vacunaRepo.save(vacuna(firulais, "Sextuple",
+                                                                        LocalDate.now().minusYears(1).minusMonths(1),
+                                                                        LocalDate.now().minusMonths(1)));
+                                                        atencionRepo.save(atencion(firulais,
+                                                                        LocalDate.now().minusMonths(3),
+                                                                        "Control anual",
+                                                                        "Sano, peso adecuado",
+                                                                        "Desparasitación y control en 12 meses"));
+                                                });
+                        }
                 };
         }
 
@@ -109,6 +135,26 @@ public class DatosIniciales {
                 m.setEdad(edad);
                 m.setDueno(dueno);
                 return m;
+        }
+
+        private static Vacuna vacuna(Mascota mascota, String nombre, LocalDate aplicacion, LocalDate vencimiento) {
+                Vacuna v = new Vacuna();
+                v.setMascota(mascota);
+                v.setNombre(nombre);
+                v.setFechaAplicacion(aplicacion);
+                v.setFechaVencimiento(vencimiento);
+                return v;
+        }
+
+        private static Atencion atencion(Mascota mascota, LocalDate fecha, String motivo,
+                        String diagnostico, String tratamiento) {
+                Atencion a = new Atencion();
+                a.setMascota(mascota);
+                a.setFecha(fecha);
+                a.setMotivo(motivo);
+                a.setDiagnostico(diagnostico);
+                a.setTratamiento(tratamiento);
+                return a;
         }
 
         private static Cita cita(Mascota mascota, Servicio servicio, LocalDate fecha,

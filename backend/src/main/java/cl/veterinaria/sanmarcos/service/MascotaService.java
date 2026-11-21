@@ -66,6 +66,11 @@ public class MascotaService {
         actual.setEspecie(cambios.getEspecie());
         actual.setRaza(cambios.getRaza());
         actual.setEdad(cambios.getEdad());
+        
+        // Si el JSON no trae "chip" se conserva el que ya tenía; un texto vacío lo borra
+        if (cambios.getChip() != null) {
+            actual.setChip(cambios.getChip().isBlank() ? null : cambios.getChip().trim());
+        }
 
         // Solo el personal puede traspasar una mascota a otro dueño
         if (Permisos.esPersonal(autenticacion)) {

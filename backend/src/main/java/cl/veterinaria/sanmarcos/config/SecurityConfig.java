@@ -65,6 +65,12 @@ public class SecurityConfig {
                         // Solo admin
                         .requestMatchers("/api/servicios/**").hasRole("ADMIN")
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+                        
+                        // Ficha clínica: ver es del dueño o del personal (lo revisa el servicio);
+                        // registrar, editar y borrar es solo del personal
+                        .requestMatchers(HttpMethod.POST, "/api/mascotas/*/vacunas", "/api/mascotas/*/atenciones")
+                        .hasAnyRole("ADMIN", "RECEPCION")
+                        .requestMatchers("/api/vacunas/**", "/api/atenciones/**").hasAnyRole("ADMIN", "RECEPCION")
 
                         // Mascotas
                         .requestMatchers(HttpMethod.GET, "/api/mascotas/mias").authenticated()

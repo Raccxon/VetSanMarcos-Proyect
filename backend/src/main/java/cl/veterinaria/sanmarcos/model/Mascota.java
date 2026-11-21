@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Mascota {
@@ -31,6 +32,10 @@ public class Mascota {
     @Min(value = 0, message = "La edad no puede ser negativa")
     @Max(value = 40, message = "La edad no puede superar 40")
     private Integer edad;
+
+    // Número del microchip (opcional)
+    @Size(max = 30, message = "El chip no puede superar 30 caracteres")
+    private String chip;
 
     // Cada mascota pertenece a un usuario (su dueño)
     @NotNull(message = "El dueño es obligatorio")
@@ -81,6 +86,14 @@ public class Mascota {
         this.edad = edad;
     }
 
+    public String getChip() {
+        return chip;
+    }
+
+    public void setChip(String chip) {
+        this.chip = chip;
+    }
+    
     public Usuario getDueno() {
         return dueno;
     }
