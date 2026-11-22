@@ -2,14 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from './App'
-import { CitasProvider } from './context/CitasContext.jsx'
 
 const renderEnRuta = (ruta) =>
     render(
         <MemoryRouter initialEntries={[ruta]}>
-            <CitasProvider>
-                <App />
-            </CitasProvider>
+            <App />
         </MemoryRouter>
     )
 

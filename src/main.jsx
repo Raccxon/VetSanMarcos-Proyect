@@ -1,4 +1,3 @@
-// Importar las librerias necesarias para la aplicacion
 import { StrictMode } from 'react'
 // trae funcion que conecta react con el HTML
 import { createRoot } from 'react-dom/client'
@@ -15,15 +14,11 @@ import './style.css'
 // trae el componente de toda la aplicacion
 import App from './App.jsx'
 
-import { CitasProvider } from './context/CitasContext.jsx'
-
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <CitasProvider>
-        <App />
-      </CitasProvider>
+      <App />
     </BrowserRouter>
   </StrictMode>
 )

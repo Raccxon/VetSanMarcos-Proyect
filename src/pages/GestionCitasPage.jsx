@@ -4,7 +4,6 @@ import { ESTADOS_CITA, CLASE_BADGE_ESTADO } from "../constants/estadosCitas";
 import { BLOQUES_HORARIO } from "../utils/agenda";
 import { fechaNoPasada } from "../utils/validaciones";
 import { obtenerFechaHoy } from "../utils/fechas";
-import { citasDelDia } from "../utils/historial";
 
 export default function GestionCitasPage() {
     const [citas, setCitas] = useState([]);
@@ -45,7 +44,7 @@ export default function GestionCitasPage() {
     const reemplazar = (actualizada) =>
         setCitas((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)));
 
-    const delDia = citasDelDia(citas, fecha).sort((a, b) => a.hora.localeCompare(b.hora));
+    const delDia = citas.filter((c) => c.fecha === fecha).sort((a, b) => a.hora.localeCompare(b.hora));
     const citasVisibles =
         filtro === "Todas" ? delDia : delDia.filter((c) => c.estado === filtro);
 
