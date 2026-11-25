@@ -168,3 +168,16 @@ El backend se probó manualmente desde Swagger (casos exitosos, validaciones 400
 - Marcar una cita como Atendida no genera automáticamente el registro de la vacuna o de la atención; el personal lo registra en la ficha.
 - Desde "Gestión de Fichas" no se crean dueños ni mascotas nuevas: el dueño se registra solo (o lo crea el administrador) y su mascota la crea el cliente.
 - Los servicios tienen un campo de stock informativo; agendar una cita no lo descuenta.
+
+## Docker
+
+Con Docker Desktop abierto, desde la carpeta raíz del proyecto:
+
+```bash
+docker compose up --build
+```
+
+- Frontend: http://localhost:5173
+- Swagger: http://localhost:8080/swagger-ui.html
+
+Para detener: `docker compose down`. Para borrar también la base de datos: `docker compose down -v`.
